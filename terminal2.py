@@ -3,7 +3,6 @@ import sys
 import random
 import os
 import time
-import socket # NOVO: Para comunicação de rede UDP
 
 # Tentar forçar o driver de vídeo para Windows, pode ajudar com tela preta
 os.environ['SDL_VIDEODRIVER'] = 'windows'
@@ -41,7 +40,8 @@ historico_comandos, historico_indice, \
 hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
 hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, \
 hacking_sequencias_ativas, \
-purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional 
+purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, \
+shutdown_start_time # Adicionada aqui
 
 # --- Variáveis do Jogo de Hacking ---
 hacking_game_ativo = False
@@ -71,7 +71,7 @@ hacking_tipos_especiais = [
 NUM_SEQUENCIAS_ESPECIAIS = 4
 
 # --- Comando Secreto de Backdoor ---
-COMANDO_BACKDOOR = "SYS.OVERRIDE(BIOPH@RMA_CORE)"
+COMANDO_BACKDOOR = ">>>OVERRIDE<<<"
 
 # --- STATUS DOS SISTEMAS ---
 sistema_status = {
@@ -107,34 +107,21 @@ purge_tempo_total_segundos = 15 * 60 # 15 minutos (900 segundos)
 # purge_tempo_total_segundos = 30 # Para testes rapidos, descomente esta linha e comente a de cima
 purge_tempo_inicio_ticks = 0
 purge_mensagem_adicional = "" # Mensagens como "Validando...", "Fase Crítica", etc.
-# NOVO: Caminho para o arquivo de música da purga
-MUSICA_PURGE_ALERTA = os.path.join('sons', 'purge_alert.mp3') # Ajuste 'sons/purge_alert.mp3' para o seu caminho e nome do arquivo
+# Caminho para o arquivo de música da purga
+MUSICA_PURGE_ALERTA = os.path.join('sons', 'purge_alert.mp3')
 
 
-# --- ESP LED Integration (NOVO) ---
-# Substitua estes IPs pelos endereços reais dos seus ESP8266 na rede local.
-# Você pode encontrar o IP do ESP8266 no Serial Monitor do Arduino IDE quando ele se conecta ao Wi-Fi.
-ESP_IPS = ["192.168.1.100", "192.168.1.101"] # Exemplo: IP da Luminária 1, IP da Luminária 2
-ESP_PORT = 8888 # Porta UDP que o ESP8266 vai escutar
-
-# Criar um socket UDP global
-udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-udp_socket.settimeout(0.1) # Timeout curto para não bloquear o Pygame
-
-def send_led_command(command):
-    """Envia um comando UDP para todos os ESP8266 definidos."""
-    message = command.encode('utf-8')
-    for esp_ip in ESP_IPS:
-        try:
-            udp_socket.sendto(message, (esp_ip, ESP_PORT))
-            print(f"DEBUG_LED: Enviado '{command}' para {esp_ip}:{ESP_PORT}") # DEBUG
-        except Exception as e:
-            print(f"ERRO_LED: Falha ao enviar comando '{command}' para {esp_ip}: {e}") # DEBUG
-
-# --- FIM DA INTEGRAÇÃO COM LED ---
+# --- Configurações de Som do Terminal ---
+SOM_BOOT_UP = os.path.join('sons', 'boot_up.mp3')
+SOM_ENTER_KEY = os.path.join('sons', 'enter_key.mp3')
+SOM_VALID_COMMAND = os.path.join('sons', 'command_valid.mp3')
+SOM_INVALID_COMMAND = os.path.join('sons', 'command_invalid.mp3')
+SOM_LOGIN_SUCCESS = os.path.join('sons', 'login_success.mp3')
+SOM_LOGIN_FAIL = os.path.join('sons', 'login_fail.mp3')
+SOM_SHUTDOWN = os.path.join('sons', 'shutdown.mp3')
 
 
-# --- Inicialização do Pygame ---
+# --- Inicialização do Pygame e Sons ---
 pygame.init()
 pygame.mixer.init() 
 try:
@@ -144,6 +131,40 @@ except pygame.error as e:
     print(f"ATENÇÃO: Não foi possível carregar a música de alerta da purga: {e}")
     print(f"Verifique se o arquivo '{MUSICA_PURGE_ALERTA}' existe na pasta '{os.path.abspath('sons')}'")
     MUSICA_PURGE_ALERTA = None # Define como None para sinalizar que não há música
+
+# Carregar sons de comando (carregados na memória)
+som_boot_up = None
+som_enter_key = None
+som_valid_command = None
+som_invalid_command = None
+som_login_success = None
+som_login_fail = None
+som_shutdown = None
+
+try:
+    som_boot_up = pygame.mixer.Sound(SOM_BOOT_UP)
+    som_boot_up.set_volume(0.6)
+    som_enter_key = pygame.mixer.Sound(SOM_ENTER_KEY)
+    som_enter_key.set_volume(0.3)
+    som_valid_command = pygame.mixer.Sound(SOM_VALID_COMMAND)
+    som_valid_command.set_volume(0.4)
+    som_invalid_command = pygame.mixer.Sound(SOM_INVALID_COMMAND)
+    som_invalid_command.set_volume(0.4)
+    som_login_success = pygame.mixer.Sound(SOM_LOGIN_SUCCESS)
+    som_login_success.set_volume(0.5)
+    som_login_fail = pygame.mixer.Sound(SOM_LOGIN_FAIL)
+    som_login_fail.set_volume(0.5)
+    som_shutdown = pygame.mixer.Sound(SOM_SHUTDOWN)
+    som_shutdown.set_volume(0.7)
+except pygame.error as e:
+    print(f"ATENÇÃO: Um ou mais sons de comando não puderam ser carregados: {e}")
+    som_boot_up = None
+    som_enter_key = None
+    som_valid_command = None
+    som_invalid_command = None
+    som_login_success = None
+    som_login_fail = None
+    som_shutdown = None
 
 
 tela = pygame.display.set_mode((LARGURA_TELA, ALTURA_TELA))
@@ -159,6 +180,24 @@ except FileNotFoundError:
     print("Por favor, baixe uma fonte no estilo terminal (ex: Monofonto.ttf) e coloque na mesma pasta.")
     pygame.quit()
     sys.exit()
+
+# --- HELPER para Tocar Sons ---
+def play_sound(sound_type):
+    """Toca um som específico se ele foi carregado."""
+    if sound_type == "boot_up" and som_boot_up:
+        som_boot_up.play()
+    elif sound_type == "enter" and som_enter_key:
+        som_enter_key.play()
+    elif sound_type == "valid" and som_valid_command:
+        som_valid_command.play()
+    elif sound_type == "invalid" and som_invalid_command:
+        som_invalid_command.play()
+    elif sound_type == "login_success" and som_login_success:
+        som_login_success.play()
+    elif sound_type == "login_fail" and som_login_fail:
+        som_login_fail.play()
+    elif sound_type == "shutdown" and som_shutdown:
+        som_shutdown.play()
 
 # --- CLASSE PARA O SISTEMA DE LOGIN ---
 class SistemaLogin:
@@ -208,7 +247,7 @@ class SistemaLogin:
 class SistemaArquivos:
     def __init__(self):
         self.estrutura = {
-            "ST.AGNES": { # O diretório raiz, AGORA RESTAURADO
+            "ST.AGNES": { # O diretório raiz
                 "PESQUISAS": {
                     "RELATORIO_T_VIRUS.TXT": [
                         "RELATORIO DE PESQUISA: T-VIRUS",
@@ -454,6 +493,7 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
     
     sugestao_proximo_estado = None 
     dados_proximo_estado = None
+    sugestao_som_tocar = None # NOVO: Inicializa a sugestão de som
 
     if comando_limpo == "HELP":
         respostas.append("")
@@ -471,6 +511,7 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
         respostas.append("  hack                 | inicia o mini-game de hacking")
         respostas.append("  clear                | clears o terminal screen")
         respostas.append("")
+        sugestao_som_tocar = "valid" # Comando HELP é válido
     elif comando_limpo == "MENU":
         if sistema_login_instance.esta_logado():
             if sistema_login_instance.usuario_logado == "marcus" or sistema_login_instance.usuario_logado == "admin":
@@ -479,51 +520,71 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
                 respostas.extend(get_menu_cientista_chefe())
             else:
                 respostas.extend(get_menu_cientista())
+            sugestao_som_tocar = "valid" # Comando MENU é válido
         else:
             respostas.append("Nenhum usuário logado. Faça login para acessar o menu de opções.")
-    elif comando_limpo.startswith("CD "):
+            sugestao_som_tocar = "invalid" # Não pode acessar o menu sem logar
+    elif comando_limpo.startswith("CD ") or comando_limpo == "CD..":
         if sistema_login_instance.esta_logado():
-            partes = comando_limpo.split(" ", 1)
-            if len(partes) > 1:
-                diretorio_alvo = partes[1].strip()
-                respostas.extend(sistema_arquivos_instance.cd(diretorio_alvo))
+            if comando_limpo == "CD..":
+                diretorio_alvo = ".."
             else:
-                respostas.append("Uso: CD [diretorio]")
+                partes = comando_limpo.split(" ", 1)
+                if len(partes) > 1:
+                    diretorio_alvo = partes[1].strip()
+                else:
+                    respostas.append("Uso: CD [diretorio]")
+                    sugestao_som_tocar = "invalid"
+                    return (respostas, sugestao_proximo_estado, dados_proximo_estado, sugestao_som_tocar)
+            
+            respostas.extend(sistema_arquivos_instance.cd(diretorio_alvo))
+            sugestao_som_tocar = "valid"
         else:
             respostas.append("Acesso negado. Por favor, faça login.")
+            sugestao_som_tocar = "invalid"
     elif comando_limpo == "LS":
         if sistema_login_instance.esta_logado():
             respostas.extend(sistema_arquivos_instance.ls())
+            sugestao_som_tocar = "valid"
         else:
             respostas.append("Acesso negado. Por favor, faça login.")
+            sugestao_som_tocar = "invalid"
     elif comando_limpo.startswith("VIEW "):
         if sistema_login_instance.esta_logado():
             partes = comando_limpo.split(" ", 1)
             if len(partes) > 1:
                 nome_arquivo_alvo = partes[1].strip()
-                # A função view agora pode retornar uma sugestão de estado
                 view_respostas, view_sugestao = sistema_arquivos_instance.view(nome_arquivo_alvo)
                 respostas.extend(view_respostas)
-                if view_sugestao: # Se view sugerir uma mudança de estado (ex: ATIVAR_PURGE)
+                if view_sugestao:
                     sugestao_proximo_estado = view_sugestao
+                    sugestao_som_tocar = "valid"
+                else:
+                    sugestao_som_tocar = "valid"
             else:
                 respostas.append("Uso: VIEW [arquivo]")
+                sugestao_som_tocar = "invalid"
         else:
             respostas.append("Acesso negado. Por favor, faça login.")
+            sugestao_som_tocar = "invalid"
     elif comando_limpo.startswith("EXEC "): # NOVO COMANDO EXEC
         if sistema_login_instance.esta_logado():
             partes = comando_limpo.split(" ", 1)
             if len(partes) > 1:
                 nome_arquivo_alvo = partes[1].strip()
-                # Reusa a lógica de VIEW, já que faz a mesma coisa
                 exec_respostas, exec_sugestao = sistema_arquivos_instance.view(nome_arquivo_alvo)
                 respostas.extend(exec_respostas)
-                if exec_sugestao: # Se view sugerir uma mudança de estado (ex: ATIVAR_PURGE)
+                if exec_sugestao:
                     sugestao_proximo_estado = exec_sugestao
+                    sugestao_som_tocar = "valid"
+                else:
+                    sugestao_som_tocar = "valid"
             else:
                 respostas.append("Uso: EXEC [arquivo]")
+                sugestao_som_tocar = "invalid"
         else:
             respostas.append("Acesso negado. Por favor, faça login.")
+            sugestao_som_tocar = "invalid"
     elif comando_limpo == "HACK":
         if sistema_login_instance.esta_logado() and \
            sistema_login_instance.usuario_logado in ["marcus", "chefe", "admin"]:
@@ -572,20 +633,19 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
             dados_proximo_estado = dados_hacking
             
             respostas.append("Iniciando Hacking Protocol...")
+            sugestao_som_tocar = "valid"
             
         else:
             respostas.append("Acesso negado: Somente o Diretor ou Cientista Chefe podem iniciar o Hacking.")
             respostas.append("Faça login com um usuário autorizado.")
+            sugestao_som_tocar = "invalid"
     elif comando_limpo == "STATUS":
         if sistema_login_instance.esta_logado():
-            # Separar o argumento do STATUS
             partes = comando_limpo.split(" ", 1)
-            sistema_alvo = partes[1].upper() if len(partes) > 1 else "OVERVIEW" # Se não tiver arg, pega overview
+            sistema_alvo = partes[1].upper() if len(partes) > 1 else "OVERVIEW"
             
             if sistema_alvo in sistema_status:
                 status_obj = sistema_status[sistema_alvo]
-                # Verifica permissão para acessar este status específico
-                # Se acesso_requerido estiver vazio, todos logados podem ver
                 if not status_obj["acesso_requerido"] or \
                    sistema_login_instance.usuario_logado in status_obj["acesso_requerido"]:
                     respostas.append(f"--- STATUS DE {status_obj['nome_exibicao'].upper()} ---")
@@ -593,48 +653,59 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
                     for detalhe in status_obj['detalhes']:
                         respostas.append(f"  - {detalhe}")
                     respostas.append("----------------------------")
+                    sugestao_som_tocar = "valid"
                 else:
                     respostas.append(f"Acesso negado: Você não tem permissão para ver o status de {status_obj['nome_exibicao']}.")
-            elif sistema_alvo == "OVERVIEW": # Visão geral de todos os sistemas
+                    sugestao_som_tocar = "invalid"
+            elif sistema_alvo == "OVERVIEW":
                 respostas.append("--- STATUS GERAL DO SISTEMA ---")
                 for sys_key, sys_info in sistema_status.items():
-                    # Exibe apenas o status básico se não tiver acesso detalhado
                     if not sys_info["acesso_requerido"] or \
                        sistema_login_instance.usuario_logado in sys_info["acesso_requerido"]:
                         respostas.append(f"  {sys_info['nome_exibicao']}: {sys_info['status']}")
                     else:
                         respostas.append(f"  {sys_info['nome_exibicao']}: Acesso Restrito")
                 respostas.append("----------------------------")
+                sugestao_som_tocar = "valid"
             else:
                 respostas.append(f"Sistema '{sistema_alvo}' não reconhecido.")
                 respostas.append("Sistemas disponíveis: ENERGIA, SERVIDOR, BACKUP, BIOAMOSTRAS.")
+                sugestao_som_tocar = "invalid"
         else:
             respostas.append("Acesso negado. Por favor, faça login (LOGON [user]).")
+            sugestao_som_tocar = "invalid"
     elif comando_limpo == "DIR":
         if sistema_login_instance.esta_logado():
             respostas.append("Este comando foi substituído por 'LS'.")
             respostas.extend(sistema_arquivos_instance.ls())
+            sugestao_som_tocar = "valid"
         else:
             respostas.append("Acesso negado. Por favor, faça login (LOGON [user]).")
+            sugestao_som_tocar = "invalid"
     elif comando_limpo == "CLEAR":
         sugestao_proximo_estado = "CLEAR_SCREEN"
+        sugestao_som_tocar = "valid"
     elif comando_limpo == "EXIT":
         respostas.append("Desligando terminal...")
         sugestao_proximo_estado = "EXIT_GAME"
+        sugestao_som_tocar = "shutdown"
     elif comando_limpo == "LOGOUT":
         if sistema_login_instance.esta_logado():
             sistema_login_instance.deslogar()
             sistema_arquivos_instance.caminho_atual = ["ST.AGNES"]
             respostas.append("Logout bem-sucedido.")
             respostas.append("Sistema aguardando login.")
+            sugestao_som_tocar = "login_success"
         else:
             respostas.append("Nenhum usuário logado.")
+            sugestao_som_tocar = "invalid"
     elif comando_limpo.startswith("LOGON"):
         if sistema_login_instance.esta_logado():
             respostas.append(f"Usuário '{sistema_login_instance.get_nome_exibicao(sistema_login_instance.usuario_logado)}' já está logado.")
             respostas.append("Faça LOGOUT antes de tentar um novo login.")
+            sugestao_som_tocar = "invalid"
         else:
-            partes = comando_limpo.split(" ")
+            partes = comando_limpo.split(" ", 1)
             if len(partes) > 1:
                 usuario_tentativa = partes[1].lower()
                 if usuario_tentativa in sistema_login_instance.usuarios:
@@ -642,16 +713,20 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
                     respostas.append("Enter password now:")
                     sugestao_proximo_estado = "AGUARDANDO_SENHA"
                     dados_proximo_estado = usuario_tentativa
+                    sugestao_som_tocar = "valid"
                 else:
                     respostas.append(f"Usuário '{usuario_tentativa}' não encontrado.")
                     respostas.append("Digite 'HELP' para ver os comandos disponíveis.")
+                    sugestao_som_tocar = "invalid"
             else:
                 respostas.append("Uso: LOGON [user]")
+                sugestao_som_tocar = "invalid"
     else:
         respostas.append(f"Comando '{comando}' não reconhecido.")
         respostas.append("Digite 'HELP' para ver os comandos disponíveis.")
+        sugestao_som_tocar = "invalid"
     
-    return (respostas, sugestao_proximo_estado, dados_proximo_estado)
+    return (respostas, sugestao_proximo_estado, dados_proximo_estado, sugestao_som_tocar)
 
 # --- Funções do Jogo de Hacking ---
 def _calcular_likeness(palavra1, palavra2):
@@ -665,13 +740,15 @@ def _calcular_likeness(palavra1, palavra2):
 
 # --- Função da Tela de Loading ---
 def mostrar_tela_loading():
+    play_sound("boot_up") # Tocar som de boot up
+
     tempo_inicio = pygame.time.get_ticks()
     tempo_total_loading = 3000
     
     mensagens_loading_header = "LEAV -- DUSK % (C) 1987"
     mensagens_loading_footer = "Loading: user_info/password.txt::[File found]"
     
-    st_agnes_texto = "ST.AGNES BIOPHARMA INSTITUTE" # Renomeado ST.AGNES para o nome completo da instituição
+    st_agnes_texto = "ST.AGNES BIOPHARMA INSTITUTE"
     st_agnes_visivel = True
     ultimo_tick_st_agnes = pygame.time.get_ticks()
     intervalo_piscar_st_agnes = 300 
@@ -726,7 +803,7 @@ def get_menu_inicial_mensagens():
 mensagens_historico = get_menu_inicial_mensagens()
 
 # --- ADICIONA AS RESPOSTAS DO MENU NO INÍCIO (ANTIGO HELP) ---
-respostas_menu_inicial, _, _ = processar_comando("HELP", sistema_login, sistema_arquivos) 
+respostas_menu_inicial, _, _, _ = processar_comando("HELP", sistema_login, sistema_arquivos) 
 mensagens_historico.extend(respostas_menu_inicial)
 # --- FIM DA ADIÇÃO DO MENU ---
 
@@ -743,6 +820,9 @@ mostrar_cursor = True
 
 # --- Loop Principal do Jogo/Simulação ---
 rodando = True
+# Variável para controlar o início da animação de desligamento
+shutdown_start_time = 0
+
 while rodando:
     tempo_frame = pygame.time.get_ticks()
 
@@ -761,18 +841,22 @@ while rodando:
         if evento.type == pygame.QUIT:
             rodando = False
         elif evento.type == pygame.K_ESCAPE: # Adicionado para sair com ESC
-            rodando = False
+            # Se apertar ESC no modo de desligamento, sai imediatamente
+            if estado_terminal == "DESLIGANDO":
+                rodando = False
+            else: # Em outros modos, ESC encerra normalmente
+                rodando = False
         elif evento.type == pygame.KEYDOWN:
             # --- PROCESSAMENTO PRINCIPAL DA ENTRADA (K_RETURN) ---
             if evento.key == pygame.K_RETURN:
+                play_sound("enter")
                 
-                # Armazena o estado atual antes de qualquer processamento
                 estado_antes_processamento = estado_terminal
 
                 if estado_terminal == "AGUARDANDO_COMANDO":
                     linha_digitada_no_historico = f"> {comando_atual}"
                     
-                    if comando_atual.strip() != "": # Se o comando não for vazio
+                    if comando_atual.strip() != "":
                         historico_comandos.append(comando_atual.strip())
                         historico_indice = -1 
                         
@@ -780,13 +864,11 @@ while rodando:
 
                         comando_a_processar = comando_atual.strip()
 
-                        # --- Lógica do COMANDO SECRETO de Backdoor ---
                         if comando_a_processar.upper() == COMANDO_BACKDOOR:
-                            sistema_login.usuario_logado = "admin" # Loga como admin
+                            sistema_login.usuario_logado = "admin"
                             mensagens_historico.append("BACKDOOR ACCESS GRANTED.")
                             mensagens_historico.append("ADMIN LOGIN INITIATED. Initiating bypass protocol...")
                             
-                            # Replicar a lógica de setup do HACK aqui
                             comprimento_alvo = random.choice([6, 7, 8, 9])
                             palavras_filtradas = [p for p in hacking_palavras_base if len(p) == comprimento_alvo]
                             
@@ -816,11 +898,11 @@ while rodando:
                             hacking_palavras_possiveis = todas_opcoes
                             palavras_sem_sequencias = [p for p in todas_opcoes if p not in [s[0] for s in sequencias_geradas]]
                             hacking_senha_correta = random.choice(palavras_sem_sequencias) if palavras_sem_sequencias else random.choice(palavras_filtradas)
-                            hacking_sequencias_ativas = {seq_str: tipo_ef for seq_str, tipo_ef in sequencias_geradas}
+                            hacking_sequencias_actives = {seq_str: tipo_ef for seq_str, tipo_ef in sequencias_geradas}
                             
-                            hacking_game_ativo = True # Ativa o jogo de hacking
-                            hacking_tentativas_restantes = hacking_max_tentativas # Reseta tentativas
-                            hacking_likeness_ultima_tentativa = -1 # Reseta likeness
+                            hacking_game_ativo = True
+                            hacking_tentativas_restantes = hacking_max_tentativas
+                            hacking_likeness_ultima_tentativa = -1
 
                             mensagens_historico.append(f"Senhas possíveis (comprimento {comprimento_alvo}):")
                             colunas = 3
@@ -829,20 +911,18 @@ while rodando:
                                 mensagens_historico.append(linha_palavras)
                             mensagens_historico.append(f"\nTentativas restantes: {hacking_max_tentativas}")
                             
-                            estado_terminal = "HACKING" # Mudar o estado para HACKING
-                            comando_atual = "" # Limpar o comando de backdoor para iniciar a digitação do hack
+                            estado_terminal = "HACKING"
+                            comando_atual = ""
                             
-                            break # CRÍTICO: Sai do tratamento do evento KEYDOWN para o loop principal
+                            play_sound("valid")
+                            break
 
-                        # --- Fim da Lógica do COMANDO SECRETO ---
-
-                        # Se não for o comando secreto, processa comandos normais
-                        respostas_do_comando, sugestao_proximo_estado, dados_proximo_estado = \
+                        respostas_do_comando, sugestao_proximo_estado, dados_proximo_estado, sugestao_som_tocar = \
                             processar_comando(comando_a_processar, sistema_login, sistema_arquivos)
                         
                         mensagens_historico.extend(respostas_do_comando)
+                        play_sound(sugestao_som_tocar)
 
-                        # --- APLICA A SUGESTÃO DE MUDANÇA DE ESTADO E LIMPA COMANDO_ATUAL ---
                         if sugestao_proximo_estado == "HACKING":
                             hacking_game_ativo = True
                             hacking_palavras_possiveis = dados_proximo_estado['palavras']
@@ -853,44 +933,46 @@ while rodando:
 
                             estado_terminal = "HACKING"
                             comando_atual = ""
-                            break # CRÍTICO: Sai do tratamento do evento KEYDOWN para o loop principal
+                            break
                             
                         elif sugestao_proximo_estado == "AGUARDANDO_SENHA":
                             estado_terminal = "AGUARDANDO_SENHA"
                             usuario_tentando_logar = dados_proximo_estado
                             comando_atual = ""
-                            break # CRÍTICO: Sai do tratamento do evento KEYDOWN para o loop principal
+                            break
                             
                         elif sugestao_proximo_estado == "CLEAR_SCREEN":
                             mensagens_historico = get_menu_inicial_mensagens()
-                            respostas_menu_inicial, _, _ = processar_comando("HELP", sistema_login, sistema_arquivos)
+                            respostas_menu_inicial, _, _, _ = processar_comando("HELP", sistema_login, sistema_arquivos)
                             mensagens_historico.extend(respostas_menu_inicial)
                             comando_atual = ""
                             estado_terminal = "AGUARDANDO_COMANDO"
                         
                         elif sugestao_proximo_estado == "EXIT_GAME":
-                            rodando = False
+                            estado_terminal = "DESLIGANDO" # Transiciona para o estado de desligamento
+                            shutdown_start_time = pygame.time.get_ticks() # NOVO: Inicia o timer de desligamento
                             comando_atual = ""
-                            break # CRÍTICO: Sai do tratamento do evento KEYDOWN para o loop principal
+                            # O som de shutdown já é tocado em processar_comando
+                            # O 'rodando = False' final será ativado pela animação de desligamento
+                            break
                         
-                        elif sugestao_proximo_estado == "ATIVAR_PURGE": # NOVO: Ativar o protocolo de purga
+                        elif sugestao_proximo_estado == "ATIVAR_PURGE":
                             purge_protocolo_ativo = True
-                            purge_tempo_inicio_ticks = pygame.time.get_ticks() # Registra o tempo de início da purga
-                            purge_mensagem_adicional = "Validando credenciais..." # Mensagem inicial
-                            # Toca a música da purga
+                            purge_tempo_inicio_ticks = pygame.time.get_ticks()
+                            purge_mensagem_adicional = "Validando credenciais..."
                             if MUSICA_PURGE_ALERTA and not pygame.mixer.music.get_busy():
-                                pygame.mixer.music.play(-1) # O -1 faz a música tocar em loop
+                                pygame.mixer.music.play(-1)
                             
-                            estado_terminal = "PURGE_CONTADOR" # Entra no novo estado de contagem regressiva
-                            comando_atual = "" # Limpa o comando para que não haja input durante a contagem
-                            break # Sai do tratamento do evento KEYDOWN
+                            estado_terminal = "PURGE_CONTADOR"
+                            comando_atual = ""
+                            break
                             
-                        else: # Nenhuma sugestão de mudança de estado (comando normal que não é LOGON, HACK, CLEAR, EXIT, ATIVAR_PURGE)
-                            comando_atual = "" # Limpa o comando após ser processado normalmente
-                    else: # Se o usuário só apertar ENTER no modo de comando (com comando_atual vazio)
+                        else:
+                            comando_atual = ""
+                    else:
                         mensagens_historico.append(linha_digitada_no_historico)
                         comando_atual = ""
-                # --- FIM DO FLUXO AGUARDANDO_COMANDO ---
+                        play_sound("invalid")
                 
                 elif estado_terminal == "AGUARDANDO_SENHA":
                     senha_digitada = comando_atual.strip()
@@ -899,6 +981,7 @@ while rodando:
                     if sistema_login.verificar_credenciais(usuario_tentando_logar, senha_digitada):
                         mensagens_historico.append(f"Login de '{sistema_login.get_nome_exibicao(sistema_login.usuario_logado)}' bem-sucedido.")
                         mensagens_historico.append(f"Bem-vindo, {sistema_login.get_nome_exibicao(sistema_login.usuario_logado)}!")
+                        play_sound("login_success")
                         
                         if sistema_login.usuario_logado == "marcus" or sistema_login.usuario_logado == "admin":
                             mensagens_historico.extend(get_menu_diretor())
@@ -910,6 +993,7 @@ while rodando:
                     else:
                         mensagens_historico.append("Senha incorreta. Acesso negado.")
                         sistema_login.deslogar() 
+                        play_sound("login_fail")
 
                     estado_terminal = "AGUARDANDO_COMANDO" 
                     comando_atual = "" 
@@ -918,11 +1002,11 @@ while rodando:
                 elif estado_terminal == "HACKING":
                     palpite = comando_atual.strip().upper()
 
-                    # Verifica se o palpite é uma sequência especial ativa
                     if palpite in hacking_sequencias_ativas:
                         efeito = hacking_sequencias_ativas[palpite]
                         mensagens_historico.append(f"GUESS > {palpite}")
                         mensagens_historico.append(f"Sequência especial ativada: {efeito.upper()}!")
+                        play_sound("valid")
 
                         if efeito == "dud":
                             duds_removiveis = [
@@ -950,6 +1034,7 @@ while rodando:
                         
                         if palpite == hacking_senha_correta:
                             mensagens_historico.append("Acesso garantido! Senha correta!")
+                            play_sound("login_success")
                             hacking_game_ativo = False
                             estado_terminal = "AGUARDANDO_COMANDO"
                         else:
@@ -958,36 +1043,39 @@ while rodando:
                             hacking_likeness_ultima_tentativa = likeness
                             mensagens_historico.append(f"Senha incorreta. Similaridade: {likeness}/{len(hacking_senha_correta)}")
                             mensagens_historico.append(f"Tentativas restantes: {hacking_tentativas_restantes}")
+                            play_sound("invalid")
 
                             if hacking_tentativas_restantes <= 0:
                                 mensagens_historico.append(f"Tentativas esgotadas. Terminal bloqueado.")
                                 mensagens_historico.append(f"A senha era: {hacking_senha_correta}")
+                                play_sound("login_fail")
                                 hacking_game_ativo = False
                                 estado_terminal = "AGUARDANDO_COMANDO"
                     else:
                         mensagens_historico.append(f"GUESS > {palpite}")
                         mensagens_historico.append(f"'{palpite}' não é uma senha válida. Tente novamente.")
+                        play_sound("invalid")
                     
                     comando_atual = ""
                 
                 elif estado_terminal == "PURGE_CONTADOR":
                     # Nenhum input é permitido durante a contagem regressiva
                     mensagens_historico.append("Protocolo de purga em andamento. Nenhuma entrada permitida.")
-                    comando_atual = "" # Limpa qualquer coisa que o usuário tenha tentado digitar
+                    comando_atual = ""
                     # Não há mudança de estado aqui, a contagem continua
 
 
             elif evento.key == pygame.K_BACKSPACE:
-                # Permite BACKSPACE apenas se não estiver no modo de contagem
-                if estado_terminal != "PURGE_CONTADOR":
+                # Permite BACKSPACE apenas se não estiver no modo de contagem ou desligamento
+                if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO"]:
                     comando_atual = comando_atual[:-1]
                     historico_indice = -1 
             elif evento.key == pygame.K_ESCAPE:
-                rodando = False
+                rodando = False # Já tratado no inicio do loop de eventos, mas mantido aqui.
             
             # --- Lógica do Histórico de Comandos (Setas UP/DOWN) ---
-            # Bloquear navegação no histórico durante a contagem regressiva
-            elif estado_terminal != "PURGE_CONTADOR" and evento.key == pygame.K_UP:
+            # Bloquear navegação no histórico durante a contagem regressiva ou desligamento
+            elif estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO"] and evento.key == pygame.K_UP:
                 if historico_comandos:
                     if historico_indice == -1:
                         historico_indice = len(historico_comandos) - 1
@@ -996,7 +1084,7 @@ while rodando:
                     
                     comando_atual = historico_comandos[historico_indice]
                 
-            elif estado_terminal != "PURGE_CONTADOR" and evento.key == pygame.K_DOWN:
+            elif estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO"] and evento.key == pygame.K_DOWN:
                 if historico_comandos:
                     if historico_indice < len(historico_comandos) - 1:
                         historico_indice += 1
@@ -1007,8 +1095,9 @@ while rodando:
                 
             # --- Fim da Lógica do Histórico de Comandos ---
 
-            else: 
-                if evento.unicode and evento.unicode.isprintable():
+            else: # Captura caracteres normais (letras, números, símbolos)
+                # Bloquear digitação durante a contagem regressiva ou desligamento
+                if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO"] and evento.unicode and evento.unicode.isprintable():
                     if estado_terminal == "AGUARDANDO_SENHA":
                         comando_atual += evento.unicode
                     else:
@@ -1016,7 +1105,7 @@ while rodando:
                         historico_indice = -1 
 
 
-    tela.fill(COR_FUNDO)
+    tela.fill(COR_FUNDO) # Limpa a tela a cada frame
 
     # --- Lógica de renderização de estados ---
     if estado_terminal == "PURGE_CONTADOR":
@@ -1032,10 +1121,10 @@ while rodando:
         mensagem_status_purga = purge_mensagem_adicional
 
         # Fases da mensagem da purga
-        if tempo_restante_segundos > purge_tempo_total_segundos - 10: # Primeiros 10 segundos
+        if tempo_restante_segundos > purge_tempo_total_segundos - 10:
             mensagem_status_purga = "Protocolo de Purga: Validando credenciais de detonacao..."
             cronometro_cor = COR_TEXTO
-        elif tempo_restante_segundos > purge_tempo_total_segundos - 20: # Próximos 10 segundos
+        elif tempo_restante_segundos > purge_tempo_total_segundos - 20:
             mensagem_status_purga = "Protocolo de Purga: Iniciando sequencia de aniquilacao de dados..."
             cronometro_cor = COR_TEXTO
         elif tempo_restante_segundos > 60: # Maior que 1 minuto
@@ -1066,14 +1155,39 @@ while rodando:
 
         # Verifica se o tempo acabou
         if tempo_restante_segundos <= 0:
+            # Não para a música nem fecha aqui, a transição para DESLIGANDO fará isso
+            # Garante que a mensagem "DETONACAO." seja mostrada por um frame
             mensagens_historico.append("Protocolo de purga concluído. Detonação iminente.")
-            if pygame.mixer.music.get_busy():
-                pygame.mixer.music.stop()
-            # Adiciona um pequeno atraso antes de fechar para o impacto visual final
-            pygame.display.flip() # Garante que a mensagem "DETONACAO." seja mostrada
-            time.sleep(2) # Pausa por 2 segundos
-            rodando = False # Sai do loop principal
-            
+            estado_terminal = "DESLIGANDO" # Transiciona para o desligamento
+            shutdown_start_time = pygame.time.get_ticks() # Inicia o timer de desligamento
+            play_sound("shutdown") # Toca o som de shutdown
+            # O rodando = False será ativado pelo estado DESLIGANDO
+
+    elif estado_terminal == "DESLIGANDO": # NOVO ESTADO DE RENDERIZAÇÃO PARA DESLIGAMENTO
+        tempo_desligamento_passado = (pygame.time.get_ticks() - shutdown_start_time) / 1000
+        
+        # Mensagens da animação de desligamento
+        if tempo_desligamento_passado < 1.0: # Primeiro segundo
+            mensagem_desligamento = "Sistema desligando..."
+        elif tempo_desligamento_passado < 2.5: # Próximos segundos
+            mensagem_desligamento = "Desativando modulos..."
+        elif tempo_desligamento_passado < 4.0:
+            mensagem_desligamento = "Adeus."
+        else: # Mais de 4 segundos, encerra
+            mensagem_desligamento = "" # Limpa a tela no último momento
+            rodando = False # FINALMENTE ENCERRA O PROGRAMA AQUI
+
+        # Renderiza a mensagem de desligamento
+        texto_desligamento = fonte_grande.render(mensagem_desligamento, True, COR_TEXTO)
+        desligamento_rect = texto_desligamento.get_rect(center=(LARGURA_TELA // 2, ALTURA_TELA // 2))
+        
+        # Efeito de desaparecer/piscar
+        if tempo_desligamento_passado < 4.0 and int(tempo_desligamento_passado * 5) % 2 == 0: # Pisca rapidamente
+             tela.blit(texto_desligamento, desligamento_rect)
+        elif tempo_desligamento_passado >= 4.0: # Último momento, limpa a tela para fechar
+             tela.fill(COR_FUNDO)
+
+
     else: # Renderização normal do terminal (comandos, senha, hacking)
         y_offset = 10
         if estado_terminal == "HACKING":
@@ -1124,17 +1238,17 @@ while rodando:
 
     # Lógica para o cursor piscando na linha de comando atual
     tempo_atual = pygame.time.get_ticks()
-    if estado_terminal != "PURGE_CONTADOR" and tempo_atual - ultimo_tick_cursor > INTERVALO_CURSOR_PISCAR:
+    if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO"] and tempo_atual - ultimo_tick_cursor > INTERVALO_CURSOR_PISCAR: # Não pisca durante desligamento
         mostrar_cursor = not mostrar_cursor
         ultimo_tick_cursor = tempo_atual
 
-    if estado_terminal != "PURGE_CONTADOR" and mostrar_cursor:
+    if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO"] and mostrar_cursor: # Não mostra cursor durante desligamento
         cursor_pos_x = 10 + texto_renderizado_comando.get_width()
         cursor_rect = pygame.Rect(cursor_pos_x, y_offset, fonte.size(" ")[0], TAMANHO_FONTE)
         pygame.draw.rect(tela, COR_TEXTO, cursor_rect)
 
     # --- Aplica os Efeitos de Glitch (ANTES DO SCANLINE E FLIP) ---
-    if glitch_ativo and estado_terminal != "PURGE_CONTADOR": # Glitches não devem ocorrer durante a purga
+    if glitch_ativo and estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO"]: # Glitches não devem ocorrer durante a purga ou desligamento
         if glitch_tipo == 'shift':
             shift_x = random.randint(-GLITCH_SHIFT_MAX, GLITCH_SHIFT_MAX)
             shift_y = random.randint(-GLITCH_SHIFT_MAX, GLITCH_SHIFT_MAX)
