@@ -21,6 +21,16 @@ INTERVALO_CURSOR_PISCAR = 500
 # Caminho para sua fonte (certifique-se de que o arquivo .ttf esteja na mesma pasta)
 NOME_ARQUIVO_FONTE = 'monofonto.ttf'
 
+# Declarando TODAS as variáveis globais que podem ser MODIFICADAS NESTE BLOCO de KEYDOWN.
+# Esta deve ser a PRIMEIRA COISA dentro do elif evento.type == pygame.KEYDOWN:
+global comando_atual, estado_terminal, usuario_tentando_logar, \
+historico_comandos, historico_indice, \
+hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
+hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, \
+hacking_sequencias_ativas, \
+purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, protocolo_atual_nome, \
+shutdown_start_time, hack_initiated_by_backdoor, hack_restart_delay_start_time, hack_restart_duration 
+
 # --- Configurações de Glitch ---
 GLITCH_PROBABILITY = 0.005
 GLITCH_DURATION_MIN = 50
@@ -32,16 +42,6 @@ glitch_ativo = False
 glitch_tipo = None
 glitch_tempo_inicio = 0
 glitch_duracao = 0
-
-# Declarando TODAS as variáveis globais que podem ser MODIFICADAS NESTE BLOCO de KEYDOWN.
-# Esta deve ser a PRIMEIRA COISA dentro do elif evento.type == pygame.KEYDOWN:
-global comando_atual, estado_terminal, usuario_tentando_logar, \
-historico_comandos, historico_indice, \
-hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
-hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, \
-hacking_sequencias_ativas, \
-purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, \
-shutdown_start_time # Adicionada aqui
 
 # --- Variáveis do Jogo de Hacking ---
 hacking_game_ativo = False
@@ -107,7 +107,6 @@ purge_tempo_total_segundos = 15 * 60 # 15 minutos (900 segundos)
 # purge_tempo_total_segundos = 30 # Para testes rapidos, descomente esta linha e comente a de cima
 purge_tempo_inicio_ticks = 0
 purge_mensagem_adicional = "" # Mensagens como "Validando...", "Fase Crítica", etc.
-# Caminho para o arquivo de música da purga
 MUSICA_PURGE_ALERTA = os.path.join('sons', 'purge_alert.mp3')
 
 
@@ -167,7 +166,7 @@ except pygame.error as e:
     som_shutdown = None
 
 
-tela = pygame.display.set_mode((LARGURA_TELA, ALTURA_TELA))
+tela = pygame.display.set_mode((LARGURA_TELA, ALTURA_TELA), pygame.FULLSCREEN)
 pygame.display.set_caption("Terminal Pip-Boy (Fallout Inspired)")
 
 try:
@@ -209,7 +208,8 @@ class SistemaLogin:
             "birkin": "g-virus",
             "annette": "researcher",
             "chefe": "nucleoalpha",
-            "admin": "root", # NOVO USUÁRIO: ADMIN
+            "admin": "root",
+            "tech": "datacore"
         }
         self.usuario_logado = None
 
@@ -238,9 +238,11 @@ class SistemaLogin:
         elif usuario == "annette":
             return "Dra. Annette Birkin"
         elif usuario == "chefe":
-            return "Dr. [Nome do Chefe] (Chefe)"
+            return "Dr. [Nome do Chefe] (Cientista Chefe)"
         elif usuario == "admin":
             return "Administrator"
+        elif usuario == "tech":
+            return "Técnico de Sistemas"
         return usuario.capitalize()
 
 # --- CLASSE PARA O SISTEMA DE ARQUIVOS ---
@@ -332,6 +334,23 @@ class SistemaArquivos:
                         "Data: 2077/08/12 - Tentativa manual (Nível Alfa). Falha: Credenciais insuficientes.",
                         "Data: 2077/09/01 - Ativação Automática (Nível Beta). Motivo: Vazamento do G-Vírus no Laboratório Principal. Status: Protocolo pendente."
                     ]
+                },
+                "SERVER_DESTRUCT": { # NOVO: Diretório para destruição do servidor
+                    "ATIVAR_SERVER_DESTRUCT.BAT": [
+                        "@echo off",
+                        "REM Protocolo de Destruicao de Servidores da ST.AGNES Biopharma Institute",
+                        "ECHO Validando credenciais de Nivel Omega para destruicao de servidor...",
+                        "SET SERVER_DESTRUCT_SEQUENCE=INITIATED",
+                        "CALL destroy_main_server_data.bat",
+                        "CALL wipe_backup_server.sh",
+                        "ECHO Ativando temporizadores de detonacao em 180 segundos para servidores.",
+                        "ECHO ALERTA: Todos os dados do servidor serao permanentemente apagados."
+                    ],
+                    "LOGS_SERVER_DESTRUCT.TXT": [
+                        "REGISTROS DE ATIVAÇÃO DE PROTOCOLO DE DESTRUICAO DE SERVIDOR",
+                        "Data: 2077/10/05 - Tentativa manual (Nível Tech). Falha: Credenciais insuficientes (apenas Admin/Tech).",
+                        "Data: 2077/10/01 - Ativação Automática (Nível Admin). Motivo: Invasao de rede externa. Status: Protocolo pendente."
+                    ]
                 }
             }
         }
@@ -363,14 +382,16 @@ class SistemaArquivos:
         diretorio_alvo = self._get_diretorio_por_caminho(caminho_para_testar)
 
         if diretorio_alvo:
-            # ADMIN pode acessar SERVIDOR
             if novo_diretorio_limpo == "SERVIDOR" and sistema_login.usuario_logado not in ["marcus", "admin"]:
                 return ["Acesso negado: Somente o Diretor ou Admin podem acessar a pasta SERVIDOR."]
             
-            # ADMIN pode acessar PURGE
             if novo_diretorio_limpo == "PURGE" and \
                sistema_login.usuario_logado not in ["marcus", "chefe", "admin"]:
                 return ["Acesso negado: Somente o Diretor, Cientista Chefe ou Admin podem acessar a pasta PURGE."]
+
+            if novo_diretorio_limpo == "SERVER_DESTRUCT" and \
+               sistema_login.usuario_logado not in ["tech", "admin"]:
+                return ["Acesso negado: Somente o Técnico de Sistemas ou Admin podem acessar a pasta SERVER_DESTRUCT."]
 
             self.caminho_atual.append(novo_diretorio_limpo)
             return [f"Caminho alterado para {self.get_caminho_atual_exibicao()}"]
@@ -394,6 +415,10 @@ class SistemaArquivos:
             if nome == "PURGE" and \
                sistema_login.usuario_logado not in ["marcus", "chefe", "admin"]:
                 continue 
+            
+            if nome == "SERVER_DESTRUCT" and \
+               sistema_login.usuario_logado not in ["tech", "admin"]:
+                continue
 
             respostas.append(f"  [{tipo}] {nome}")
         
@@ -423,13 +448,14 @@ class SistemaArquivos:
                     respostas.append(conteudo)
                 respostas.append(f"--- FIM DO ARQUIVO ---")
 
-                # Se o arquivo for o .BAT de auto-destruição, retorna sugestão especial
                 if nome_arquivo_limpo == "ATIVAR_PURGE.BAT":
-                    return (respostas, "ATIVAR_PURGE") # Sinaliza para o loop principal
+                    return (respostas, "ATIVAR_PURGE")
+                elif nome_arquivo_limpo == "ATIVAR_SERVER_DESTRUCT.BAT":
+                    return (respostas, "ATIVAR_SERVER_DESTRUCT")
         else:
             respostas.append(f"Erro: Arquivo '{nome_arquivo}' não encontrado no diretório atual.")
         
-        return (respostas, None) # Retorna None se não for o BAT especial
+        return (respostas, None)
 
 # Instanciar sistemas
 sistema_login = SistemaLogin()
@@ -486,6 +512,42 @@ def get_menu_diretor():
         ""
     ]
 
+def get_menu_tech(): # NOVO: Menu para o usuário tech
+    return [
+        "",
+        "--- MENU TÉCNICO DE SISTEMAS ---",
+        "  COFRE BIOLOGICO      | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
+        "  SERVIDOR             | Gerencia o servidor principal (CD SERVIDOR)",
+        "  SERVER_DESTRUCT      | Inicia protocolo de destruição de servidor (CD SERVER_DESTRUCT)",
+        "  LS                   | Lista o conteúdo da pasta atual",
+        "  CD ..                | Volta para a pasta anterior",
+        "  VIEW [arquivo]       | Exibe o conteúdo de um arquivo",
+        "  HACK                 | Inicia o mini-game de hacking",
+        "  LOGOUT               | Sai da sessão atual",
+        "------------------------------",
+        ""
+    ]
+
+def get_menu_admin(): # Menu para o usuário admin (combinando diretor e tech)
+    return [
+        "",
+        "--- MENU ADMINISTRADOR ---",
+        "  PESQUISAS            | Acessa relatórios de pesquisa (CD PESQUISAS)",
+        "  ARQUIVO              | Navega por arquivos do projeto (CD ARQUIVO)",
+        "  COFRE BIOLOGICO      | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
+        "  SERVIDOR             | Gerencia o servidor principal (CD SERVIDOR)",
+        "  PURGE                | Inicia protocolo de purga (CD PURGE)",
+        "  SERVER_DESTRUCT      | Inicia protocolo de destruição de servidor (CD SERVER_DESTRUCT)",
+        "  LS                   | Lista o conteúdo da pasta atual",
+        "  CD ..                | Volta para a pasta anterior",
+        "  VIEW [arquivo]       | Exibe o conteúdo de um arquivo",
+        "  HACK                 | Inicia o mini-game de hacking",
+        "  LOGOUT               | Sai da sessão atual",
+        "--------------------------",
+        ""
+    ]
+
+
 # --- Função para Processar Comandos (AGORA RETORNA SUGESTÕES DE ESTADO) ---
 def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance):
     comando_limpo = comando.strip().upper()
@@ -493,7 +555,7 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
     
     sugestao_proximo_estado = None 
     dados_proximo_estado = None
-    sugestao_som_tocar = None # NOVO: Inicializa a sugestão de som
+    sugestao_som_tocar = None 
 
     if comando_limpo == "HELP":
         respostas.append("")
@@ -511,19 +573,23 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
         respostas.append("  hack                 | inicia o mini-game de hacking")
         respostas.append("  clear                | clears o terminal screen")
         respostas.append("")
-        sugestao_som_tocar = "valid" # Comando HELP é válido
+        sugestao_som_tocar = "valid"
     elif comando_limpo == "MENU":
         if sistema_login_instance.esta_logado():
-            if sistema_login_instance.usuario_logado == "marcus" or sistema_login_instance.usuario_logado == "admin":
+            if sistema_login_instance.usuario_logado == "admin":
+                respostas.extend(get_menu_admin())
+            elif sistema_login_instance.usuario_logado == "marcus":
                 respostas.extend(get_menu_diretor())
             elif sistema_login_instance.usuario_logado == "chefe":
                 respostas.extend(get_menu_cientista_chefe())
+            elif sistema_login_instance.usuario_logado == "tech":
+                respostas.extend(get_menu_tech())
             else:
                 respostas.extend(get_menu_cientista())
-            sugestao_som_tocar = "valid" # Comando MENU é válido
+            sugestao_som_tocar = "valid"
         else:
             respostas.append("Nenhum usuário logado. Faça login para acessar o menu de opções.")
-            sugestao_som_tocar = "invalid" # Não pode acessar o menu sem logar
+            sugestao_som_tocar = "invalid"
     elif comando_limpo.startswith("CD ") or comando_limpo == "CD..":
         if sistema_login_instance.esta_logado():
             if comando_limpo == "CD..":
@@ -567,7 +633,7 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
         else:
             respostas.append("Acesso negado. Por favor, faça login.")
             sugestao_som_tocar = "invalid"
-    elif comando_limpo.startswith("EXEC "): # NOVO COMANDO EXEC
+    elif comando_limpo.startswith("EXEC "):
         if sistema_login_instance.esta_logado():
             partes = comando_limpo.split(" ", 1)
             if len(partes) > 1:
@@ -587,7 +653,7 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
             sugestao_som_tocar = "invalid"
     elif comando_limpo == "HACK":
         if sistema_login_instance.esta_logado() and \
-           sistema_login_instance.usuario_logado in ["marcus", "chefe", "admin"]:
+           sistema_login_instance.usuario_logado in ["marcus", "chefe", "admin", "tech"]:
             
             sugestao_proximo_estado = "HACKING"
             
@@ -636,7 +702,7 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
             sugestao_som_tocar = "valid"
             
         else:
-            respostas.append("Acesso negado: Somente o Diretor ou Cientista Chefe podem iniciar o Hacking.")
+            respostas.append("Acesso negado: Somente o Diretor, Cientista Chefe, Técnico ou Admin podem iniciar o Hacking.")
             respostas.append("Faça login com um usuário autorizado.")
             sugestao_som_tocar = "invalid"
     elif comando_limpo == "STATUS":
@@ -669,7 +735,7 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
                 sugestao_som_tocar = "valid"
             else:
                 respostas.append(f"Sistema '{sistema_alvo}' não reconhecido.")
-                respostas.append("Sistemas disponíveis: ENERGIA, SERVIDOR, BACKUP, BIOAMOSTRAS.")
+                respostas.append("Sistemas disponíveis: ENERGIA, SERVIDOR, BACKUP, BIOAMOSTRAS, SERVER_DESTRUCT.")
                 sugestao_som_tocar = "invalid"
         else:
             respostas.append("Acesso negado. Por favor, faça login (LOGON [user]).")
@@ -686,6 +752,10 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
         sugestao_proximo_estado = "CLEAR_SCREEN"
         sugestao_som_tocar = "valid"
     elif comando_limpo == "EXIT":
+        respostas.append("Desligando terminal...")
+        sugestao_proximo_estado = "EXIT_GAME"
+        sugestao_som_tocar = "shutdown"
+    elif comando_limpo == "SHUTDOWN": # Alias para EXIT
         respostas.append("Desligando terminal...")
         sugestao_proximo_estado = "EXIT_GAME"
         sugestao_som_tocar = "shutdown"
@@ -748,7 +818,7 @@ def mostrar_tela_loading():
     mensagens_loading_header = "LEAV -- DUSK % (C) 1987"
     mensagens_loading_footer = "Loading: user_info/password.txt::[File found]"
     
-    st_agnes_texto = "ST.AGNES BIOPHARMA INSTITUTE"
+    st_agnes_texto = "ST.AGNES BIOPHARMA INSTITUTE" # Renomeado ST.AGNES para o nome completo da instituição
     st_agnes_visivel = True
     ultimo_tick_st_agnes = pygame.time.get_ticks()
     intervalo_piscar_st_agnes = 300 
@@ -842,7 +912,7 @@ while rodando:
             rodando = False
         elif evento.type == pygame.K_ESCAPE: # Adicionado para sair com ESC
             # Se apertar ESC no modo de desligamento, sai imediatamente
-            if estado_terminal == "DESLIGANDO":
+            if estado_terminal == "DESLIGANDO" or estado_terminal == "TERMINAL_BLOQUEADO": # Também sai do bloqueado
                 rodando = False
             else: # Em outros modos, ESC encerra normalmente
                 rodando = False
@@ -898,11 +968,12 @@ while rodando:
                             hacking_palavras_possiveis = todas_opcoes
                             palavras_sem_sequencias = [p for p in todas_opcoes if p not in [s[0] for s in sequencias_geradas]]
                             hacking_senha_correta = random.choice(palavras_sem_sequencias) if palavras_sem_sequencias else random.choice(palavras_filtradas)
-                            hacking_sequencias_actives = {seq_str: tipo_ef for seq_str, tipo_ef in sequencias_geradas}
+                            hacking_sequencias_ativas = {seq_str: tipo_ef for seq_str, tipo_ef in sequencias_geradas}
                             
                             hacking_game_ativo = True
                             hacking_tentativas_restantes = hacking_max_tentativas
                             hacking_likeness_ultima_tentativa = -1
+                            hack_initiated_by_backdoor = True
 
                             mensagens_historico.append(f"Senhas possíveis (comprimento {comprimento_alvo}):")
                             colunas = 3
@@ -930,6 +1001,7 @@ while rodando:
                             hacking_tentativas_restantes = dados_proximo_estado['tentativas_restantes']
                             hacking_likeness_ultima_tentativa = dados_proximo_estado['likeness_ultima_tentativa']
                             hacking_sequencias_ativas = dados_proximo_estado['sequencias_ativas']
+                            hack_initiated_by_backdoor = False # Hack normal, não backdoor
 
                             estado_terminal = "HACKING"
                             comando_atual = ""
@@ -949,17 +1021,29 @@ while rodando:
                             estado_terminal = "AGUARDANDO_COMANDO"
                         
                         elif sugestao_proximo_estado == "EXIT_GAME":
-                            estado_terminal = "DESLIGANDO" # Transiciona para o estado de desligamento
-                            shutdown_start_time = pygame.time.get_ticks() # NOVO: Inicia o timer de desligamento
+                            estado_terminal = "DESLIGANDO"
+                            shutdown_start_time = pygame.time.get_ticks()
                             comando_atual = ""
-                            # O som de shutdown já é tocado em processar_comando
-                            # O 'rodando = False' final será ativado pela animação de desligamento
+                            play_sound("shutdown")
                             break
                         
                         elif sugestao_proximo_estado == "ATIVAR_PURGE":
                             purge_protocolo_ativo = True
                             purge_tempo_inicio_ticks = pygame.time.get_ticks()
-                            purge_mensagem_adicional = "Validando credenciais..."
+                            purge_mensagem_adicional = "Validando credenciais para Protocolo de Purga..."
+                            protocolo_atual_nome = "PURGE"
+                            if MUSICA_PURGE_ALERTA and not pygame.mixer.music.get_busy():
+                                pygame.mixer.music.play(-1)
+                            
+                            estado_terminal = "PURGE_CONTADOR"
+                            comando_atual = ""
+                            break
+                        
+                        elif sugestao_proximo_estado == "ATIVAR_SERVER_DESTRUCT":
+                            purge_protocolo_ativo = True
+                            purge_tempo_inicio_ticks = pygame.time.get_ticks()
+                            purge_mensagem_adicional = "Validando credenciais para Destruicao de Servidor..."
+                            protocolo_atual_nome = "SERVER_DESTRUCT"
                             if MUSICA_PURGE_ALERTA and not pygame.mixer.music.get_busy():
                                 pygame.mixer.music.play(-1)
                             
@@ -983,10 +1067,14 @@ while rodando:
                         mensagens_historico.append(f"Bem-vindo, {sistema_login.get_nome_exibicao(sistema_login.usuario_logado)}!")
                         play_sound("login_success")
                         
-                        if sistema_login.usuario_logado == "marcus" or sistema_login.usuario_logado == "admin":
+                        if sistema_login.usuario_logado == "admin":
+                            mensagens_historico.extend(get_menu_admin())
+                        elif sistema_login.usuario_logado == "marcus":
                             mensagens_historico.extend(get_menu_diretor())
                         elif sistema_login.usuario_logado == "chefe":
                             mensagens_historico.extend(get_menu_cientista_chefe())
+                        elif sistema_login.usuario_logado == "tech":
+                            mensagens_historico.extend(get_menu_tech())
                         else: # Cientista padrão
                             mensagens_historico.extend(get_menu_cientista())
 
@@ -1046,11 +1134,25 @@ while rodando:
                             play_sound("invalid")
 
                             if hacking_tentativas_restantes <= 0:
-                                mensagens_historico.append(f"Tentativas esgotadas. Terminal bloqueado.")
-                                mensagens_historico.append(f"A senha era: {hacking_senha_correta}")
-                                play_sound("login_fail")
-                                hacking_game_ativo = False
-                                estado_terminal = "AGUARDANDO_COMANDO"
+                                # Diferencia a falha de hack: backdoor vs. normal
+                                if hack_initiated_by_backdoor:
+                                    mensagens_historico.append(f"Tentativas esgotadas. Terminal bloqueado.")
+                                    mensagens_historico.append(f"A senha era: {hacking_senha_correta}")
+                                    mensagens_historico.append(f"Reiniciando protocolo de hacking em {int(hack_restart_duration / 1000)} segundos...")
+                                    play_sound("login_fail")
+                                    
+                                    hacking_game_ativo = False
+                                    estado_terminal = "HACK_RESTART_DELAY"
+                                    hack_restart_delay_start_time = pygame.time.get_ticks()
+                                    hack_initiated_by_backdoor = False # Reseta a flag para o próximo hack
+                                else:
+                                    mensagens_historico.append(f"Tentativas esgotadas. TERMINAL BLOQUEADO.")
+                                    mensagens_historico.append(f"A senha era: {hacking_senha_correta}")
+                                    mensagens_historico.append("Este terminal requer reinicializacao manual para reativar.")
+                                    play_sound("login_fail")
+                                    
+                                    hacking_game_ativo = False
+                                    estado_terminal = "TERMINAL_BLOQUEADO" # Bloqueio permanente para falha normal
                     else:
                         mensagens_historico.append(f"GUESS > {palpite}")
                         mensagens_historico.append(f"'{palpite}' não é uma senha válida. Tente novamente.")
@@ -1060,22 +1162,22 @@ while rodando:
                 
                 elif estado_terminal == "PURGE_CONTADOR":
                     # Nenhum input é permitido durante a contagem regressiva
-                    mensagens_historico.append("Protocolo de purga em andamento. Nenhuma entrada permitida.")
+                    mensagens_historico.append("Protocolo em andamento. Nenhuma entrada permitida.")
                     comando_atual = ""
                     # Não há mudança de estado aqui, a contagem continua
 
 
             elif evento.key == pygame.K_BACKSPACE:
-                # Permite BACKSPACE apenas se não estiver no modo de contagem ou desligamento
-                if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO"]:
+                # Permite BACKSPACE apenas se não estiver no modo de contagem, desligamento, bloqueado ou atraso
+                if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY"]:
                     comando_atual = comando_atual[:-1]
                     historico_indice = -1 
             elif evento.key == pygame.K_ESCAPE:
-                rodando = False # Já tratado no inicio do loop de eventos, mas mantido aqui.
+                rodando = False
             
             # --- Lógica do Histórico de Comandos (Setas UP/DOWN) ---
-            # Bloquear navegação no histórico durante a contagem regressiva ou desligamento
-            elif estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO"] and evento.key == pygame.K_UP:
+            # Bloquear navegação no histórico durante a contagem regressiva, desligamento ou bloqueio
+            elif estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY"] and evento.key == pygame.K_UP:
                 if historico_comandos:
                     if historico_indice == -1:
                         historico_indice = len(historico_comandos) - 1
@@ -1084,7 +1186,7 @@ while rodando:
                     
                     comando_atual = historico_comandos[historico_indice]
                 
-            elif estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO"] and evento.key == pygame.K_DOWN:
+            elif estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY"] and evento.key == pygame.K_DOWN:
                 if historico_comandos:
                     if historico_indice < len(historico_comandos) - 1:
                         historico_indice += 1
@@ -1095,14 +1197,14 @@ while rodando:
                 
             # --- Fim da Lógica do Histórico de Comandos ---
 
-            else: # Captura caracteres normais (letras, números, símbolos)
-                # Bloquear digitação durante a contagem regressiva ou desligamento
-                if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO"] and evento.unicode and evento.unicode.isprintable():
-                    if estado_terminal == "AGUARDANDO_SENHA":
-                        comando_atual += evento.unicode
-                    else:
-                        comando_atual += evento.unicode
-                        historico_indice = -1 
+            else: 
+                if evento.unicode and evento.unicode.isprintable():
+                    if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY"] : # Bloqueia digitação em modos especiais
+                        if estado_terminal == "AGUARDANDO_SENHA":
+                            comando_atual += evento.unicode
+                        else:
+                            comando_atual += evento.unicode
+                            historico_indice = -1 
 
 
     tela.fill(COR_FUNDO) # Limpa a tela a cada frame
@@ -1121,28 +1223,52 @@ while rodando:
         mensagem_status_purga = purge_mensagem_adicional
 
         # Fases da mensagem da purga
-        if tempo_restante_segundos > purge_tempo_total_segundos - 10:
-            mensagem_status_purga = "Protocolo de Purga: Validando credenciais de detonacao..."
-            cronometro_cor = COR_TEXTO
-        elif tempo_restante_segundos > purge_tempo_total_segundos - 20:
-            mensagem_status_purga = "Protocolo de Purga: Iniciando sequencia de aniquilacao de dados..."
-            cronometro_cor = COR_TEXTO
-        elif tempo_restante_segundos > 60: # Maior que 1 minuto
-            mensagem_status_purga = "Processo de purga em andamento. Preparando para auto-destruicao..."
-            cronometro_cor = COR_TEXTO
-        elif tempo_restante_segundos <= 60 and tempo_restante_segundos > 10: # Último minuto
-            cronometro_cor = (255, 100, 0) # Laranja
-            mensagem_status_purga = "Fase critica: Detonacao iminente!"
-        elif tempo_restante_segundos <= 10 and tempo_restante_segundos > 0: # Últimos 10 segundos (piscando)
-            cronometro_cor = (255, 0, 0) # Vermelho
-            if int(tempo_restante_segundos * 10) % 10 < 5: # Pisca a mensagem
-                mensagem_status_purga = "ATENCAO: EVACUE AGORA!"
-            else:
-                mensagem_status_purga = ""
-        elif tempo_restante_segundos <= 0:
-            cronometro_cor = (255, 0, 0)
-            mensagem_status_purga = "DETONACAO."
+        if protocolo_atual_nome == "PURGE":
+            if tempo_restante_segundos > purge_tempo_total_segundos - 10:
+                mensagem_status_purga = "Protocolo de Purga: Validando credenciais de detonacao..."
+                cronometro_cor = COR_TEXTO
+            elif tempo_restante_segundos > purge_tempo_total_segundos - 20:
+                mensagem_status_purga = "Protocolo de Purga: Iniciando sequencia de aniquilacao de dados..."
+                cronometro_cor = COR_TEXTO
+            elif tempo_restante_segundos > 60:
+                mensagem_status_purga = "Processo de purga em andamento. Preparando para auto-destruicao..."
+                cronometro_cor = COR_TEXTO
+            elif tempo_restante_segundos <= 60 and tempo_restante_segundos > 10:
+                cronometro_cor = (255, 100, 0) # Laranja
+                mensagem_status_purga = "Fase critica: Detonacao iminente!"
+            elif tempo_restante_segundos <= 10 and tempo_restante_segundos > 0:
+                cronometro_cor = (255, 0, 0) # Vermelho
+                if int(tempo_restante_segundos * 10) % 10 < 5:
+                    mensagem_status_purga = "ATENCAO: EVACUE AGORA!"
+                else:
+                    mensagem_status_purga = ""
+            elif tempo_restante_segundos <= 0:
+                cronometro_cor = (255, 0, 0)
+                mensagem_status_purga = "DETONACAO."
         
+        elif protocolo_atual_nome == "SERVER_DESTRUCT":
+            if tempo_restante_segundos > purge_tempo_total_segundos - 10:
+                mensagem_status_purga = "Destruicao de Servidor: Validando acesso de nivel Omega..."
+                cronometro_cor = COR_TEXTO
+            elif tempo_restante_segundos > purge_tempo_total_segundos - 20:
+                mensagem_status_purga = "Destruicao de Servidor: Iniciando sobrescrita de dados..."
+                cronometro_cor = COR_TEXTO
+            elif tempo_restante_segundos > 60:
+                mensagem_status_purga = "Processo de destruicao de servidor em andamento. Irreversivel..."
+                cronometro_cor = COR_TEXTO
+            elif tempo_restante_segundos <= 60 and tempo_restante_segundos > 10:
+                cronometro_cor = (255, 100, 0) # Laranja
+                mensagem_status_purga = "Fase critica: Servidores offline em breve!"
+            elif tempo_restante_segundos <= 10 and tempo_restante_segundos > 0:
+                cronometro_cor = (255, 0, 0) # Vermelho
+                if int(tempo_restante_segundos * 10) % 10 < 5:
+                    mensagem_status_purga = "ALERTA: DADOS DO SERVIDOR PERDIDOS!"
+                else:
+                    mensagem_status_purga = ""
+            elif tempo_restante_segundos <= 0:
+                cronometro_cor = (255, 0, 0)
+                mensagem_status_purga = "SERVIDORES OFFLINE."
+
         # Desenha o cronômetro
         texto_cronometro = fonte_cronometro.render(cronometro_str, True, cronometro_cor)
         cronometro_rect = texto_cronometro.get_rect(center=(LARGURA_TELA // 2, ALTURA_TELA // 2 - 50))
@@ -1156,38 +1282,120 @@ while rodando:
         # Verifica se o tempo acabou
         if tempo_restante_segundos <= 0:
             # Não para a música nem fecha aqui, a transição para DESLIGANDO fará isso
-            # Garante que a mensagem "DETONACAO." seja mostrada por um frame
-            mensagens_historico.append("Protocolo de purga concluído. Detonação iminente.")
+            mensagens_historico.append(f"Protocolo de {protocolo_atual_nome} concluído. Sistema desligando.")
             estado_terminal = "DESLIGANDO" # Transiciona para o desligamento
             shutdown_start_time = pygame.time.get_ticks() # Inicia o timer de desligamento
-            play_sound("shutdown") # Toca o som de shutdown
-            # O rodando = False será ativado pelo estado DESLIGANDO
+            play_sound("shutdown")
 
-    elif estado_terminal == "DESLIGANDO": # NOVO ESTADO DE RENDERIZAÇÃO PARA DESLIGAMENTO
+    elif estado_terminal == "DESLIGANDO": # ESTADO DE RENDERIZAÇÃO PARA DESLIGAMENTO
         tempo_desligamento_passado = (pygame.time.get_ticks() - shutdown_start_time) / 1000
         
         # Mensagens da animação de desligamento
-        if tempo_desligamento_passado < 1.0: # Primeiro segundo
+        if tempo_desligamento_passado < 1.0:
             mensagem_desligamento = "Sistema desligando..."
-        elif tempo_desligamento_passado < 2.5: # Próximos segundos
+        elif tempo_desligamento_passado < 2.5:
             mensagem_desligamento = "Desativando modulos..."
         elif tempo_desligamento_passado < 4.0:
             mensagem_desligamento = "Adeus."
-        else: # Mais de 4 segundos, encerra
-            mensagem_desligamento = "" # Limpa a tela no último momento
-            rodando = False # FINALMENTE ENCERRA O PROGRAMA AQUI
+        else:
+            mensagem_desligamento = ""
+            rodando = False
 
         # Renderiza a mensagem de desligamento
         texto_desligamento = fonte_grande.render(mensagem_desligamento, True, COR_TEXTO)
         desligamento_rect = texto_desligamento.get_rect(center=(LARGURA_TELA // 2, ALTURA_TELA // 2))
         
         # Efeito de desaparecer/piscar
-        if tempo_desligamento_passado < 4.0 and int(tempo_desligamento_passado * 5) % 2 == 0: # Pisca rapidamente
+        if tempo_desligamento_passado < 4.0 and int(tempo_desligamento_passado * 5) % 2 == 0:
              tela.blit(texto_desligamento, desligamento_rect)
-        elif tempo_desligamento_passado >= 4.0: # Último momento, limpa a tela para fechar
+        elif tempo_desligamento_passado >= 4.0:
              tela.fill(COR_FUNDO)
 
+    elif estado_terminal == "TERMINAL_BLOQUEADO": # NOVO: ESTADO DE TERMINAL BLOQUEADO (após falha no hack normal)
+        mensagem_bloqueio = "TERMINAL BLOQUEADO."
+        sub_mensagem_bloqueio = "Este terminal requer reinicializacao manual para reativar."
+        
+        # Piscar a mensagem
+        if int(tempo_frame / INTERVALO_CURSOR_PISCAR) % 2 == 0:
+            texto_bloqueio = fonte_grande.render(mensagem_bloqueio, True, (255, 0, 0)) # Vermelho piscante
+            texto_sub_bloqueio = fonte_pequena.render(sub_mensagem_bloqueio, True, (255, 0, 0))
+        else:
+            texto_bloqueio = fonte_grande.render(mensagem_bloqueio, True, COR_TEXTO) # Verde normal
+            texto_sub_bloqueio = fonte_pequena.render(sub_mensagem_bloqueio, True, COR_TEXTO)
+        
+        bloqueio_rect = texto_bloqueio.get_rect(center=(LARGURA_TELA // 2, ALTURA_TELA // 2 - 20))
+        sub_bloqueio_rect = texto_sub_bloqueio.get_rect(center=(LARGURA_TELA // 2, ALTURA_TELA // 2 + 30))
 
+        tela.blit(texto_bloqueio, bloqueio_rect)
+        tela.blit(texto_sub_bloqueio, sub_bloqueio_rect)
+
+    elif estado_terminal == "HACK_RESTART_DELAY": # Estado de atraso do hack (só para backdoor)
+        tempo_atraso_passado = (pygame.time.get_ticks() - hack_restart_delay_start_time) / 1000
+        tempo_atraso_restante = max(0, hack_restart_duration / 1000 - tempo_atraso_passado)
+        
+        mensagem_atraso = f"Hack falhou. Reiniciando em {int(tempo_atraso_restante)} segundos..."
+        
+        # Piscar a mensagem
+        if int(tempo_atraso_passado * 5) % 2 == 0:
+            texto_atraso = fonte_grande.render(mensagem_atraso, True, (255, 100, 0)) # Laranja piscante
+        else:
+            texto_atraso = fonte_grande.render(mensagem_atraso, True, COR_TEXTO)
+
+        atraso_rect = texto_atraso.get_rect(center=(LARGURA_TELA // 2, ALTURA_TELA // 2))
+        tela.blit(texto_atraso, atraso_rect)
+
+        if tempo_atraso_restante <= 0:
+            # Chamar função para inicializar o hack novamente
+            # Copiamos a lógica de setup do HACK aqui diretamente para evitar passar muitas globais para uma função
+            
+            # Replicar a lógica de setup do HACK aqui (do backdoor/HACK command)
+            comprimento_alvo = random.choice([6, 7, 8, 9])
+            palavras_filtradas = [p for p in hacking_palavras_base if len(p) == comprimento_alvo]
+            
+            if len(palavras_filtradas) < hacking_max_tentativas * 2:
+                palavras_filtradas = [p for p in hacking_palavras_base if len(p) >= 6]
+
+            sequencias_geradas = []
+            for _ in range(NUM_SEQUENCIAS_ESPECIAIS):
+                tipo_seq_info = random.choice(hacking_tipos_especiais)
+                open_char = tipo_seq_info[1]
+                close_char = tipo_seq_info[2]
+                junk_content = ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=random.randint(1, 3)))
+                sequencia_completa = f"{open_char}{junk_content}{close_char}"
+                sequencias_geradas.append((sequencia_completa, tipo_seq_info[0]))
+            
+            todas_opcoes = list(palavras_filtradas)
+            for seq_str, _ in sequencias_geradas:
+                todas_opcoes.append(seq_str)
+            random.shuffle(todas_opcoes)
+            
+            if len(todas_opcoes) < 10 and len(hacking_palavras_base) > len(todas_opcoes):
+                while len(todas_opcoes) < 10:
+                    palavra_nova = random.choice(hacking_palavras_base)
+                    if len(palavra_nova) == comprimento_alvo and palavra_nova not in todas_opcoes:
+                        todas_opcoes.append(palavra_nova)
+            
+            hacking_palavras_possiveis = todas_opcoes
+            palavras_sem_sequencias = [p for p in todas_opcoes if p not in [s[0] for s in sequencias_geradas]]
+            hacking_senha_correta = random.choice(palavras_sem_sequencias) if palavras_sem_sequencias else random.choice(palavras_filtradas)
+            hacking_sequencias_ativas = {seq_str: tipo_ef for seq_str, tipo_ef in sequencias_geradas}
+            
+            hacking_game_ativo = True
+            hacking_tentativas_restantes = hacking_max_tentativas
+            hacking_likeness_ultima_tentativa = -1
+
+            mensagens_historico.append("Reiniciando hacking...")
+            mensagens_historico.append(f"Senhas possíveis (comprimento {comprimento_alvo}):")
+            colunas = 3
+            for i in range(0, len(hacking_palavras_possiveis), colunas):
+                linha_palavras = "  ".join(hacking_palavras_possiveis[i:i+colunas])
+                mensagens_historico.append(linha_palavras)
+            mensagens_historico.append(f"\nTentativas restantes: {hacking_max_tentativas}")
+
+            estado_terminal = "HACKING"
+            comando_atual = ""
+            play_sound("valid")
+            
     else: # Renderização normal do terminal (comandos, senha, hacking)
         y_offset = 10
         if estado_terminal == "HACKING":
@@ -1238,17 +1446,17 @@ while rodando:
 
     # Lógica para o cursor piscando na linha de comando atual
     tempo_atual = pygame.time.get_ticks()
-    if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO"] and tempo_atual - ultimo_tick_cursor > INTERVALO_CURSOR_PISCAR: # Não pisca durante desligamento
+    if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY"] and tempo_atual - ultimo_tick_cursor > INTERVALO_CURSOR_PISCAR:
         mostrar_cursor = not mostrar_cursor
         ultimo_tick_cursor = tempo_atual
 
-    if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO"] and mostrar_cursor: # Não mostra cursor durante desligamento
+    if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY"] and mostrar_cursor:
         cursor_pos_x = 10 + texto_renderizado_comando.get_width()
         cursor_rect = pygame.Rect(cursor_pos_x, y_offset, fonte.size(" ")[0], TAMANHO_FONTE)
         pygame.draw.rect(tela, COR_TEXTO, cursor_rect)
 
     # --- Aplica os Efeitos de Glitch (ANTES DO SCANLINE E FLIP) ---
-    if glitch_ativo and estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO"]: # Glitches não devem ocorrer durante a purga ou desligamento
+    if glitch_ativo and estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY"]:
         if glitch_tipo == 'shift':
             shift_x = random.randint(-GLITCH_SHIFT_MAX, GLITCH_SHIFT_MAX)
             shift_y = random.randint(-GLITCH_SHIFT_MAX, GLITCH_SHIFT_MAX)
