@@ -99,7 +99,7 @@ SOM_LOGIN_SUCCESS = os.path.join('sons', 'login_success.mp3')
 SOM_LOGIN_FAIL = os.path.join('sons', 'login_fail.mp3')
 SOM_SHUTDOWN = os.path.join('sons', 'shutdown.mp3')
 MUSICA_PURGE_ALERTA = os.path.join('sons', 'purge_alert.mp3')
-MUSICA_SERVER_DESTRUCT_ALERTA = os.path.join('sons', 'server_destruct_alert.mp3') # NOVA MÚSICA AQUI
+MUSICA_SERVER_DESTRUCT_ALERTA = os.path.join('sons', 'server_destruct_alert.mp3') 
 
 # --- Configurações de Protocolo de Autodestruição (Purge/Server Destruct) ---
 PURGE_TEMPO_TOTAL_SEGUNDOS = 15 * 60 # 15 minutos (900 segundos)
@@ -108,3 +108,7 @@ PURGE_TEMPO_TOTAL_SEGUNDOS = 15 * 60 # 15 minutos (900 segundos)
 # --- Configurações para a exibição das telas ---
 TEMPO_TELA_INICIAL = 2 # Segundos que a tela inicial "Laboratório St.Agnes" fica visível antes de aguardar input
 TEMPO_TELA_LOADING = 3 # Segundos que a tela de "Loading" fica visível
+
+# --- Configurações das Luminárias ---
+IP_LUMINARIA = "192.168.1.100" # <--- SUBSTITUA PELO IP DO SEU ESP8266/LUMINÁRIA (ex: "192.168.1.100")
+PORTA_LUMINARIA = 8888        # Porta UDP que o ESP8266 estará escutando (ex: 8888)

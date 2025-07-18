@@ -4,12 +4,16 @@ import random
 import os
 import time
 
+# Tentar forçar o driver de vídeo para Windows, pode ajudar com tela preta
+os.environ['SDL_VIDEODRIVER'] = 'windows'
+
 # Importar os módulos personalizados
 import config
 import systems
 import menus_commands
 import screens
 import hacking_logic
+import luz_api # Importa a API das luminárias
 
 # --- Inicialização do Pygame e Sons ---
 pygame.init()
@@ -47,13 +51,18 @@ try:
     sounds['login_fail'].set_volume(0.5)
     sounds['shutdown'] = pygame.mixer.Sound(config.SOM_SHUTDOWN)
     sounds['shutdown'].set_volume(0.7)
+    sounds['server_destruct_alert'] = pygame.mixer.Sound(config.MUSICA_SERVER_DESTRUCT_ALERTA)
+    sounds['server_destruct_alert'].set_volume(0.5) 
+    sounds['purge_alert'] = pygame.mixer.Sound(config.MUSICA_PURGE_ALERTA)
+    sounds['purge_alert'].set_volume(0.5) 
+    
 except pygame.error as e:
     print(f"ATENÇÃO: Um ou mais sons não puderam ser carregados: {e}")
     print(f"Verifique se os arquivos de som existem na pasta '{os.path.abspath('sons')}'")
     # Define sons como None para evitar erros se não carregados
-    for key in ['boot_up', 'enter_key', 'valid_command', 'invalid_command', 'login_success', 'login_fail', 'shutdown']:
+    for key in ['boot_up', 'enter_key', 'valid_command', 'invalid_command', 'login_success', 'login_fail', 'shutdown', 'purge_alert', 'server_destruct_alert']:
         if key not in sounds:
-            sounds[key] = None # Garante que a chave exista, mesmo que o som não esteja carregado
+            sounds[key] = None 
 
 # Configurar tela
 screen = pygame.display.set_mode((config.LARGURA_TELA, config.ALTURA_TELA))
@@ -110,12 +119,11 @@ while True: # Loop externo para reiniciar o terminal completamente
     sistema_login = systems.SistemaLogin()
     sistema_arquivos = systems.SistemaArquivos() 
 
-    # --- Mensagens iniciais do histórico para SERVER MAIN ---
-    # Tema Umbrella/RE2: Nome de servidor personalizado
+    # --- Mensagens iniciais do histórico para SERVER MAIN (NOME DO SERVIDOR PERSONALIZADO) ---
     mensagens_historico = [
-        "------ UMBRELLA CORP. SERVER (TM) R.C. LABS INTERFACE ------", # Nome do servidor personalizado
-        "COPYRIGHT (C) 1998 UMBRELLA CORPORATION. ALL RIGHTS RESERVED.", # Referência ao ano de RE2
-        "", # Espaço entre o cabeçalho e as instruções
+        "------ UMBRELLA CORP. SERVER (TM) R.C. LABS INTERFACE ------", 
+        "COPYRIGHT (C) 1998 UMBRELLA CORPORATION. ALL RIGHTS RESERVED.", 
+        "", 
     ]
     # Adiciona as mensagens de HELP e LOGON da função menus_commands
     mensagens_historico.extend(menus_commands.get_menu_inicial_mensagens()) 
@@ -163,6 +171,7 @@ while True: # Loop externo para reiniciar o terminal completamente
             elif evento.type == pygame.K_RIGHT and pygame.key.get_mods() & pygame.KMOD_ALT: # Alt+Right para sair
                 rodando = False
             elif evento.type == pygame.KEYDOWN:
+
                 # --- Processamento de Entrada de Usuário (Baseado no Estado do Terminal) ---
                 if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY"]:
                     if evento.key == pygame.K_RETURN:
@@ -256,7 +265,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                                         purge_mensagem_adicional = "Validando credenciais para Destruicao de Servidor..."
                                         protocolo_atual_nome = "SERVER_DESTRUCT"
                                         if sounds.get('purge_alert') and not pygame.mixer.music.get_busy():
-                                            pygame.mixer.music.load(config.MUSICA_PURGE_ALERTA)
+                                            pygame.mixer.music.load(config.MUSICA_SERVER_DESTRUCT_ALERTA) # Alterado para nova música
                                             pygame.mixer.music.play(-1)
                                         estado_terminal = "PURGE_CONTADOR"
                                     

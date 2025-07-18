@@ -4,6 +4,9 @@ import random
 import os
 import time
 
+# Tentar forçar o driver de vídeo para Windows, pode ajudar com tela preta
+os.environ['SDL_VIDEODRIVER'] = 'windows'
+
 # Importar os módulos personalizados
 import config
 import systems
@@ -47,13 +50,18 @@ try:
     sounds['login_fail'].set_volume(0.5)
     sounds['shutdown'] = pygame.mixer.Sound(config.SOM_SHUTDOWN)
     sounds['shutdown'].set_volume(0.7)
+    sounds['server_destruct_alert'] = pygame.mixer.Sound(config.MUSICA_SERVER_DESTRUCT_ALERTA)
+    sounds['server_destruct_alert'].set_volume(0.5) 
+    sounds['purge_alert'] = pygame.mixer.Sound(config.MUSICA_PURGE_ALERTA)
+    sounds['purge_alert'].set_volume(0.5) 
+    
 except pygame.error as e:
     print(f"ATENÇÃO: Um ou mais sons não puderam ser carregados: {e}")
     print(f"Verifique se os arquivos de som existem na pasta '{os.path.abspath('sons')}'")
     # Define sons como None para evitar erros se não carregados
-    for key in ['boot_up', 'enter_key', 'valid_command', 'invalid_command', 'login_success', 'login_fail', 'shutdown']:
+    for key in ['boot_up', 'enter_key', 'valid_command', 'invalid_command', 'login_success', 'login_fail', 'shutdown', 'purge_alert', 'server_destruct_alert']:
         if key not in sounds:
-            sounds[key] = None # Garante que a chave exista, mesmo que o som não esteja carregado
+            sounds[key] = None 
 
 # Configurar tela
 screen = pygame.display.set_mode((config.LARGURA_TELA, config.ALTURA_TELA))
@@ -64,15 +72,13 @@ def play_sound(sound_type):
     """Toca um som específico se ele foi carregado."""
     if sounds.get(sound_type):
         sounds[sound_type].play()
-
 # Todas as variáveis globais que podem ser MODIFICADAS NESTE BLOCO de KEYDOWN.
 global comando_atual, estado_terminal, usuario_tentando_logar, \
-        historico_comandos, historico_indice, \
-        hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
-        hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, hacking_sequencias_ativas, \
-        purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, protocolo_atual_nome, \
-        shutdown_start_time, hack_initiated_by_backdoor, hack_restart_delay_start_time
-
+historico_comandos, historico_indice, \
+hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
+hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, hacking_sequencias_ativas, \
+purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, protocolo_atual_nome, \
+shutdown_start_time, hack_initiated_by_backdoor, hack_restart_delay_start_time
 # --- LOOP PRINCIPAL DO PROGRAMA (ENGLOBANDO TUDO PARA REINICIALIZAÇÃO) ---
 while True: # Loop externo para reiniciar o terminal completamente
 
@@ -112,9 +118,7 @@ while True: # Loop externo para reiniciar o terminal completamente
     sistema_login = systems.SistemaLogin()
     sistema_arquivos = systems.SistemaArquivos() 
 
-    # --- Mensagens iniciais do histórico para LAB MAIN ---
-    # Agora a função get_menu_inicial_mensagens() é para as instruções HELP e LOGON
-    # As linhas de cabeçalho específicas do terminal são definidas aqui
+    # --- Mensagens iniciais do histórico para LAB MAIN (ST.AGNES) ---
     mensagens_historico = [
         "ST.AGNES BIOPHARMA INSTITUTE - TERMINAL INTERFACE V2.0",
         "COPYRIGHT (C) 2077 UMBRELLA CORP. ALL RIGHTS RESERVED.",
@@ -125,8 +129,8 @@ while True: # Loop externo para reiniciar o terminal completamente
     mensagens_historico.append("") # Adiciona uma linha em branco final para espaçamento
 
     # --- Chamada das Telas Iniciais ---
-    # Agora passamos o texto principal da splash screen como argumento para mostrar_tela_inicial
-    screens.mostrar_tela_inicial(screen, fonts, "ST.AGNES BIOPHARMA INSTITUTE") 
+    # Passamos o texto principal da splash screen como argumento para mostrar_tela_inicial
+    screens.mostrar_tela_inicial(screen, fonts, "ST.AGNES BIOPHARMA INSTITUTE") # Título específico do Laboratório
     screens.mostrar_tela_loading(screen, fonts, sounds)
 
     # CRÍTICO: Limpar a fila de eventos APÓS as telas iniciais
@@ -166,7 +170,6 @@ while True: # Loop externo para reiniciar o terminal completamente
             elif evento.type == pygame.K_RIGHT and pygame.key.get_mods() & pygame.KMOD_ALT: # Alt+Right para sair
                 rodando = False
             elif evento.type == pygame.KEYDOWN:
-
                 # --- Processamento de Entrada de Usuário (Baseado no Estado do Terminal) ---
                 if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY"]:
                     if evento.key == pygame.K_RETURN:
@@ -259,8 +262,8 @@ while True: # Loop externo para reiniciar o terminal completamente
                                         purge_tempo_inicio_ticks = pygame.time.get_ticks()
                                         purge_mensagem_adicional = "Validando credenciais para Destruicao de Servidor..."
                                         protocolo_atual_nome = "SERVER_DESTRUCT"
-                                        if sounds.get('purge_alert') and not pygame.mixer.music.get_busy():
-                                            pygame.mixer.music.load(config.MUSICA_PURGE_ALERTA)
+                                        if sounds.get('server_destruct_alert') and not pygame.mixer.music.get_busy(): # Usa MUSICA_SERVER_DESTRUCT_ALERTA
+                                            pygame.mixer.music.load(config.MUSICA_SERVER_DESTRUCT_ALERTA)
                                             pygame.mixer.music.play(-1)
                                         estado_terminal = "PURGE_CONTADOR"
                                     
