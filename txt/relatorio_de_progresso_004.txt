@@ -1,0 +1,5 @@
+RELATORIO DE PROGRESSO #004
+Data: 2077/09/28
+Projeto: Mapeamento de genomas de organismos biohazard.
+Status: 75% completo. Banco de dados em expansao.
+Proximos passos: Validar novas sequencias geneticas.

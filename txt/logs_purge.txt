@@ -1,0 +1,3 @@
+REGISTROS DE ATIVACAO DE PROTOCOLO DE PURGE
+Data: 2077/08/12 - Tentativa manual (Nivel Alfa). Falha: Credenciais insuficientes.
+Data: 2077/09/01 - Ativacao Automatica (Nivel Beta). Motivo: Vazamento do G-Virus no Laboratorio Principal. Status: Protocolo pendente.

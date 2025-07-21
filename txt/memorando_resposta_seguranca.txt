@@ -1,0 +1,46 @@
+ST. AGNES BIOTECH INSTITUTE
+ST. AGNES BIOPHARMA INSTITUTE
+DIRETORIA DE OPERACOES
+MEMORANDO DE RESPOSTA - SEGURANCA INTERNA
+Data: 18/03/2025
+Documento: RES-SEG/0460-B
+Destinatario: Celina M. Roth - Chefe de Seguranca de Instalacoes Subterraneas
+Assunto: Autorizacao Parcial - Reforco de Seguranca em Subniveis
+Prezada Sra. Roth,
+Apos analise da requisicao SEG-REQ/0459-B, informamos que a Diretoria de Operacoes
+acata parcialmente as medidas solicitadas para reforco de seguranca nos subniveis CR/2
+ate CR/7 do Instituto.
+Com base na documentacao apresentada e nos relatorios de anomalias registrados,
+consideramos justificavel o incremento de pessoal tatico em areas consideradas
+vulneraveis, sem, contudo, alterar a rotina operacional dos protocolos sigilosos em
+andamento.
+Medidas Autorizadas de Imediato:
+1. Designacao de unidades de seguranca armada para os acessos principais dos
+subniveis CR/2 e CR/3.
+2. Patrulhamento continuo nos corredores externos dos subniveis CR/4 a CR/5,
+com revezamento a cada 6 horas.
+3. Instalacao de portas de reforco magnetico em entradas de carga e emergencia
+lateral.
+4. Atualizacao dos codigos de acesso dos subniveis para padrao variavel a cada 24
+horas.
+
+ST. AGNES BIOTECH INSTITUTE
+ST. AGNES BIOPHARMA INSTITUTE
+Medidas em Avaliacao:
+Reativacao do protocolo "Muralha Fria"
+Restricao a tecnicos terceirizados
+Isolamento completo do compartimento CR/7.1
+Estas acoes exigem deliberacao superior do Comite Central de Etica Operacional e deverao
+aguardar a proxima sessao de avaliacao, prevista para 21/03/2025.
+Recomendacao interna:
+Evite alarmismo entre o corpo tecnico. A comunicacao de riscos deve permanecer restrita a
+supervisao e aos agentes autorizados.
+Qualquer vazamento de informacao sera tratado
+como quebra de sigilo interno de Nivel Delta.
+Agradecemos sua vigilancia e comprometimento com a integridade do Instituto.
+Atenciosamente,
+Dr. Elias V. Cardon
+Diretor de Operacoes
+ST. AGNES BIOPHARMA INSTITUTE
+Status: Parcialmente aprovado - Monitoramento continuo em andamento
+Classificacao: INTERNO - SIGILOSO

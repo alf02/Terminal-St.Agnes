@@ -1,0 +1,4 @@
+RELATORIO DE INCIDENTE #002
+Data: 2077/10/05
+Descricao: Anomalia no sistema de ventilacao do setor de contenção Alpha. Resolvido.
+Impacto: Minimo.

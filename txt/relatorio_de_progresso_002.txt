@@ -1,0 +1,5 @@
+RELATORIO DE PROGRESSO #002
+Data: 2077/09/22
+Projeto: Desenvolvimento de Antivirus para Z-Virus.
+Status: Fase de testes preliminares. Desafios de estabilidade.
+Proximos passos: Otimizacao da formula.

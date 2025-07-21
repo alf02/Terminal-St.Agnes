@@ -1,0 +1,46 @@
+ST. AGNES BIOTECH INSTITUTE
+ST. AGNES BIOPHARMA INSTITUTE
+DEPARTAMENTO DE CONTROLE DE INSTALACOES
+REQUISICAO INTERNA - NIVEL DE SEGURANCA
+Data: 17/03/2025
+Documento: SEG-REQ/0459-B
+Destinatario: Diretoria de Operacoes de Campo
+Assunto: Reforco Imediato de Seguranca - Subniveis CR/2 a CR/7
+Prezada Diretoria,
+Venho, por meio deste memorando, formalizar a solicitacao urgente de aumento das
+medidas de contencao e seguranca nos subniveis CR/2 ate CR/7, em especial nas alas
+CR/3 (Genetica Aplicada), CR/5 (Isolamento X), e CR/7 (XENO-HCL).
+Nas ultimas 72 horas, observamos um crescimento preocupante de incidentes nao
+autorizados, como:
+Sinais de movimentacao nao cadastrada nos corredores de contencao biometrica
+Alarmes ambientais disparados sem causa tecnica aparente
+Alteracoes inexplicadas nos registros termicos de compartimentos lacrados
+Um vazamento temporario de pressao negativa na camara 5.07-B (CR/7),
+relatado como "impossivel" pela equipe de engenharia
+Alem disso, relatorios recentes indicam instabilidade nos residuos biologicos da
+Operacao Arca Negra (ver Ref. CLN117-B/NEG), mesmo apos o descarte supervisionado
+pelo agente "Rainha de Ouro".
+Nao se descarta possibilidade de contaminacao residual
+em estruturas metalicas e valvulas de acesso.
+
+ST. AGNES BIOTECH INSTITUTE
+ST. AGNES BIOPHARMA INSTITUTE
+Recomendacoes imediatas:
+1. Designacao permanente de equipe armada nivel Bravo para vigilancia nos
+corredores CR/4 a CR/7
+2. Instalacao de trancas redundantes com codigo variavel a cada 12 horas
+3. Reativacao do protocolo "Muralha Fria" para camara CR/7.1
+4. Restricao temporaria de entrada de pessoal externo, incluindo fornecedores e
+tecnicos terceirizados
+5. Revisao psicologica emergencial para todos os cientistas da Ala X
+Observacao Final:
+Havendo qualquer tentativa de obstrucao ou atraso por parte da direcao, esta unidade se
+reserva o direito de acionar o Comite de Integridade Quimica e Biologica da Colmeia
+Central.
+A situacao nos subniveis nao e estavel.
+Atenciosamente,
+Celina M. Roth
+Chefe de Seguranca de Instalacoes Subterraneas
+ST. AGNES BIOPHARMA INSTITUTE
+Status: Aguardando aprovacao urgente
+Classificacao: INTERNO - SIGILOSO

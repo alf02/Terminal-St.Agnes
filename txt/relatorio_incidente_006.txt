@@ -1,0 +1,4 @@
+RELATORIO DE INCIDENTE #006
+Data: 2077/10/09
+Descricao: Contaminacao cruzada em protocolo de pesquisa. Amostras comprometidas descartadas.
+Status: Contido.

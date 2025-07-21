@@ -51,16 +51,18 @@ try:
     sounds['login_fail'].set_volume(0.5)
     sounds['shutdown'] = pygame.mixer.Sound(config.SOM_SHUTDOWN)
     sounds['shutdown'].set_volume(0.7)
-    sounds['server_destruct_alert'] = pygame.mixer.Sound(config.MUSICA_SERVER_DESTRUCT_ALERTA)
-    sounds['server_destruct_alert'].set_volume(0.5) 
+    
     sounds['purge_alert'] = pygame.mixer.Sound(config.MUSICA_PURGE_ALERTA)
     sounds['purge_alert'].set_volume(0.5) 
+    
+    # NÃO CARREGAMOS TODAS as músicas de server_destruct aqui para otimização.
+    # Elas serão carregadas dinamicamente quando play_sound('server_destruct_alert_random') for chamado.
     
 except pygame.error as e:
     print(f"ATENÇÃO: Um ou mais sons não puderam ser carregados: {e}")
     print(f"Verifique se os arquivos de som existem na pasta '{os.path.abspath('sons')}'")
     # Define sons como None para evitar erros se não carregados
-    for key in ['boot_up', 'enter_key', 'valid_command', 'invalid_command', 'login_success', 'login_fail', 'shutdown', 'purge_alert', 'server_destruct_alert']:
+    for key in ['boot_up', 'enter_key', 'valid_command', 'invalid_command', 'login_success', 'login_fail', 'shutdown', 'purge_alert']:
         if key not in sounds:
             sounds[key] = None 
 
@@ -70,16 +72,42 @@ pygame.display.set_caption("Terminal Pip-Boy (Fallout Inspired)")
 
 # Funções auxiliares para tocar sons (usadas como callback para evitar dependências circulares)
 def play_sound(sound_type):
-    """Toca um som específico se ele foi carregado."""
-    if sounds.get(sound_type):
+    """
+    Toca um som específico se ele foi carregado.
+    Para 'server_destruct_alert_random', sorteia uma música e a carrega dinamicamente.
+    """
+    if sound_type == 'server_destruct_alert_random': 
+        if config.MUSICAS_SERVER_DESTRUCT_ALERTA: # Verifica se a lista de caminhos não está vazia
+            random_music_path = random.choice(config.MUSICAS_SERVER_DESTRUCT_ALERTA)
+            try:
+                if pygame.mixer.music.get_busy(): # Para a música atual se estiver tocando
+                    pygame.mixer.music.stop()
+                pygame.mixer.music.load(random_music_path) # Carrega a música aleatória
+                pygame.mixer.music.play(-1) # Toca em loop
+                print(f"DEBUG: Tocando música de SERVER_DESTRUCT aleatória: {random_music_path}") # Debug para confirmar qual tocou
+            except pygame.error as e:
+                print(f"AVISO: Não foi possível carregar ou tocar a música '{random_music_path}': {e}")
+        else:
+            print("AVISO: Nenhuma música de server_destruct definida em config.MUSICAS_SERVER_DESTRUCT_ALERTA para tocar.")
+    elif sound_type == 'purge_alert': 
+        if sounds.get('purge_alert'):
+            if pygame.mixer.music.get_busy(): 
+                pygame.mixer.music.stop()
+            pygame.mixer.music.load(config.MUSICA_PURGE_ALERTA) 
+            pygame.mixer.music.play(-1)
+        else:
+            print("AVISO: Música de purge_alert não carregada para tocar.")
+    elif sounds.get(sound_type): # Para todos os outros sons (boot_up, enter_key, etc.)
+        if pygame.mixer.music.get_busy(): # Para a música de fundo se estiver tocando (para outros sons pequenos)
+            pygame.mixer.music.stop()
         sounds[sound_type].play()
 # Todas as variáveis globais que podem ser MODIFICADAS NESTE BLOCO de KEYDOWN.
 global comando_atual, estado_terminal, usuario_tentando_logar, \
-historico_comandos, historico_indice, \
-hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
-hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, hacking_sequencias_ativas, \
-purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, protocolo_atual_nome, \
-shutdown_start_time, hack_initiated_by_backdoor, hack_restart_delay_start_time
+        historico_comandos, historico_indice, \
+        hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
+        hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, hacking_sequencias_ativas, \
+        purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, protocolo_atual_nome, \
+        shutdown_start_time, hack_initiated_by_backdoor, hack_restart_delay_start_time
 # --- LOOP PRINCIPAL DO PROGRAMA (ENGLOBANDO TUDO PARA REINICIALIZAÇÃO) ---
 while True: # Loop externo para reiniciar o terminal completamente
 
@@ -255,8 +283,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                                         purge_mensagem_adicional = "Validando credenciais para Protocolo de Purga..."
                                         protocolo_atual_nome = "PURGE"
                                         if sounds.get('purge_alert') and not pygame.mixer.music.get_busy():
-                                            pygame.mixer.music.load(config.MUSICA_PURGE_ALERTA)
-                                            pygame.mixer.music.play(-1)
+                                            play_sound("purge_alert") # Chamar play_sound diretamente com o tipo
                                         luz_api.ligar_piscar_vermelho() # Liga as luzes
                                         estado_terminal = "PURGE_CONTADOR"
                                     elif sugestao_proximo_estado == "ATIVAR_SERVER_DESTRUCT":
@@ -264,9 +291,8 @@ while True: # Loop externo para reiniciar o terminal completamente
                                         purge_tempo_inicio_ticks = pygame.time.get_ticks()
                                         purge_mensagem_adicional = "Validando credenciais para Destruicao de Servidor..."
                                         protocolo_atual_nome = "SERVER_DESTRUCT"
-                                        if sounds.get('server_destruct_alert') and not pygame.mixer.music.get_busy():
-                                            pygame.mixer.music.load(config.MUSICA_SERVER_DESTRUCT_ALERTA)
-                                            pygame.mixer.music.play(-1)
+                                        # NOVO: Chamar play_sound com o tipo especial para tocar aleatoriamente
+                                        play_sound("server_destruct_alert_random") # Alterado para nova música
                                         luz_api.ligar_piscar_vermelho() # Liga as luzes
                                         estado_terminal = "PURGE_CONTADOR"
                                     
@@ -330,9 +356,9 @@ while True: # Loop externo para reiniciar o terminal completamente
                                         mensagens_historico.append("Nenhuma palavra 'dud' para remover. Tentativas +1.")
                                         hacking_tentativas_restantes += 1
                                         mensagens_historico.append(f"Tentativas restantes: {hacking_tentativas_restantes}")
-                                elif efeito == "attempt":
-                                    hacking_tentativas_restantes += 1
-                                    mensagens_historico.append(f"Tentativa adicional concedida. Tentativas restantes: {hacking_tentativas_restantes}")
+                            elif efeito == "attempt":
+                                hacking_tentativas_restantes += 1
+                                mensagens_historico.append(f"Tentativa adicional concedida. Tentativas restantes: {hacking_tentativas_restantes}")
                             
                                 # Remove a sequência especial usada para que não possa ser reutilizada
                                 if palpite in hacking_palavras_possiveis: # Certifica-se de que a sequência está na lista antes de tentar remover

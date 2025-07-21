@@ -1,0 +1,4 @@
+RELATORIO DE INCIDENTE #004
+Data: 2077/10/07
+Descricao: Falha temporaria de energia no laboratorio principal. Geradores de emergencia ativados.
+Status: Resolvido.

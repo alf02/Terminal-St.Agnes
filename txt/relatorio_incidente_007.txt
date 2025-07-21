@@ -1,0 +1,4 @@
+RELATORIO DE INCIDENTE #007
+Data: 2077/10/10
+Descricao: Alerta de seguranca em subnivel profundo. Falso alarme.
+Status: Normal.

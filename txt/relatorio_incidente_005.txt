@@ -1,0 +1,4 @@
+RELATORIO DE INCIDENTE #005
+Data: 2077/10/08
+Descricao: Roubo de pequena amostra biologica (Classe C). Agente externo identificado.
+Status: Investigacao ativa.

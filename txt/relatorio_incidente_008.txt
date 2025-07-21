@@ -1,0 +1,4 @@
+RELATORIO DE INCIDENTE #008
+Data: 2077/10/11
+Descricao: Danos estruturais menores em tubulacao de escoamento. Reparado.
+Status: Operacional.

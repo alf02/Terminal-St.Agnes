@@ -1,0 +1,3 @@
+REGISTROS DE ATIVACAO DE PROTOCOLO DE DESTRUICAO DE SERVIDOR
+Data: 2077/10/05 - Tentativa manual (Nivel Tech). Falha: Credenciais insuficientes (apenas Admin/Tech).
+Data: 2077/10/01 - Ativacao Automatica (Nivel Admin). Motivo: Invasao de rede externa. Status: Protocolo pendente.

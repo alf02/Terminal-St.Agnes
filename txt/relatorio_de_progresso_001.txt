@@ -1,0 +1,5 @@
+RELATORIO DE PROGRESSO #001
+Data: 2077/09/20
+Projeto: Estudo da variante T-Gamma.
+Status: Em andamento. Resultados iniciais promissores.
+Proximos passos: Testes in-vitro expandidos.

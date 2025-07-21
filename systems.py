@@ -1,26 +1,23 @@
-import random
 import os
-import pygame # Import pygame para pygame.mixer.Sound e pygame.error
-
-# Importa as configurações globais
-import config
+import config # Importa o módulo config para acessar as configurações de usuários e arquivos
 
 class SistemaLogin:
     def __init__(self):
         self.usuarios = {
-            "ashford": "t-virus",
-            "wesker": "umbrellacorp",
-            "marcus": "omega789",
-            "birkin": "g-virus",
-            "annette": "researcher",
-            "chefe": "nucleoalpha",
-            "admin": "root",
-            "tech": "datacore"
+            "ashford": {"senha": "t-virus", "nome_exibicao": "Dr. Charles Ashford", "acesso": "cientista"},
+            "wesker": {"senha": "umbrellacorp", "nome_exibicao": "Dr. Albert Wesker", "acesso": "cientista"},
+            "marcus": {"senha": "omega789", "nome_exibicao": "Dr. James Marcus", "acesso": "diretor"},
+            "birkin": {"senha": "g-virus", "nome_exibicao": "Dr. William Birkin", "acesso": "cientista"},
+            "annette": {"senha": "researcher", "nome_exibicao": "Dra. Annette Birkin", "acesso": "cientista"},
+            "chefe": {"senha": "nucleoalpha", "nome_exibicao": "Dr. [Nome do Chefe] (Cientista Chefe)", "acesso": "cientista_chefe"},
+            "admin": {"senha": "root", "nome_exibicao": "Administrator", "acesso": "admin"},
+            "tech": {"senha": "datacore", "nome_exibicao": "Técnico de Sistemas", "acesso": "tech"}
         }
         self.usuario_logado = None
+        self.tentativas_falhas = {} # Para controle de bloqueio por IP (não implementado ainda)
 
     def verificar_credenciais(self, usuario, senha):
-        if usuario in self.usuarios and self.usuarios[usuario] == senha:
+        if usuario in self.usuarios and self.usuarios[usuario]["senha"] == senha:
             self.usuario_logado = usuario
             return True
         self.usuario_logado = None
@@ -33,33 +30,46 @@ class SistemaLogin:
         self.usuario_logado = None
 
     def get_nome_exibicao(self, usuario):
-        if usuario == "ashford":
-            return "Dr. Charles Ashford"
-        elif usuario == "wesker":
-            return "Dr. Albert Wesker"
-        elif usuario == "marcus":
-            return "Dr. James Marcus"
-        elif usuario == "birkin":
-            return "Dr. William Birkin"
-        elif usuario == "annette":
-            return "Dra. Annette Birkin"
-        elif usuario == "chefe":
-            return "Dr. [Nome do Chefe] (Cientista Chefe)"
-        elif usuario == "admin":
-            return "Administrator"
-        elif usuario == "tech":
-            return "Técnico de Sistemas"
+        if usuario in self.usuarios:
+            return self.usuarios[usuario]["nome_exibicao"]
         return usuario.capitalize()
+
 
 class SistemaArquivos:
     def __init__(self):
+        self.caminho_atual = ["ST.AGNES"] # Representa o diretório raiz
+        
+        # Mapeamento de arquivos virtuais para arquivos TXT reais na pasta 'txt'
+        # Adiciona apenas alguns relatórios de cada tipo, conforme solicitado
+        self.TEXT_FILES_MAP = {
+            "RELATORIO_T_VIRUS.TXT": "relatorio_t_virus.txt",
+            "DADOS_G_VIRUS.TXT": "dados_g_virus.txt",
+            "REGISTRO_BIOHAZARD.TXT": "registro_biohazard.txt",
+            "MEMORANDO_DIRETORIA.TXT": "memorando_diretoria.txt",
+            "HISTORICO_EMPRESA.TXT": "historico_empresa.txt",
+            "AMOSTRA_A1.TXT": "amostra_a1.txt",
+            "AMOSTRA_B2.TXT": "amostra_b2.txt",
+            "PROTOCOLO_QUARENTENA.TXT": "protocolo_quarentena.txt",
+            "LOGS_DO_SISTEMA.TXT": "logs_do_sistema.txt",
+            "CONFIGURACOES_CRITICAS.TXT": "configuracoes_criticas.txt",
+            "LOGS_PURGE.TXT": "logs_purge.txt",
+            "LOGS_SERVER_DESTRUCT.TXT": "logs_server_destruct.txt",
+            "ATIVAR_PURGE.BAT": "ativar_purge.bat", # Estes ainda podem ter conteúdo embutido ou também TXT
+            "ATIVAR_SERVER_DESTRUCT.BAT": "ativar_server_destruct.bat", # Estes ainda podem ter conteúdo embutido ou também TXT
+        }
+        
+        # Adiciona 8 relatórios de incidente e 8 de progresso
+        for i in range(1, 9): # De 1 a 8
+            self.TEXT_FILES_MAP[f"RELATORIO_INCIDENTE_{i:03d}.TXT"] = f"relatorio_incidente_{i:03d}.txt"
+            self.TEXT_FILES_MAP[f"RELATORIO_DE_PROGRESSO_{i:03d}.TXT"] = f"relatorio_de_progresso_{i:03d}.txt"
+
         self.estrutura = {
             "ST.AGNES": { # O diretório raiz
                 "PESQUISAS": {
-                    "RELATORIO_T_VIRUS.TXT": "Arquivo de texto. Conteúdo removido para reduzir tamanho do código.",
-                    "DADOS_G_VIRUS.TXT": "Arquivo de texto. Conteúdo removido para reduzir tamanho do código.",
-                    "REGISTRO_BIOHAZARD.TXT": "Arquivo de texto. Conteúdo removido para reduzir tamanho do código.",
-                    "ATIVAR_PURGE.BAT": [
+                    "RELATORIO_T_VIRUS.TXT": "LOAD_FROM_FILE", # Indicação para carregar do arquivo
+                    "DADOS_G_VIRUS.TXT": "LOAD_FROM_FILE",
+                    "REGISTRO_BIOHAZARD.TXT": "LOAD_FROM_FILE",
+                    "ATIVAR_PURGE.BAT": [ # Conteúdo embutido para BAT por ser curto e executável
                         "@echo off",
                         "REM Protocolo de Aniquilacao Total da ST.AGNES Biopharma Institute",
                         "ECHO Validando credenciais de Nivel Omega...",
@@ -67,23 +77,23 @@ class SistemaArquivos:
                         "CALL purge_all_biological_samples.bat",
                         "CALL destroy_data_servers.sh",
                         "ECHO Ativando temporizadores de detonacion em 180 segundos.",
-                        "ECHO Por favor, evacue a area. Este seja avisado."
+                        "ECHO Por favor, evacue a area. Esteja avisado."
                     ],
-                    "LOGS_PURGE.TXT": "Arquivo de texto. Conteúdo removido para reduzir tamanho do código."
+                    "LOGS_PURGE.TXT": "LOAD_FROM_FILE",
                 },
                 "ARQUIVO": {
-                    "MEMORANDO_DIRETORIA.TXT": "Arquivo de texto. Conteúdo removido para reduzir tamanho do código.",
-                    "HISTORICO_EMPRESA.TXT": "Arquivo de texto. Conteúdo removido para reduzir tamanho do código.",
+                    "MEMORANDO_DIRETORIA.TXT": "LOAD_FROM_FILE",
+                    "HISTORICO_EMPRESA.TXT": "LOAD_FROM_FILE",
                 },
                 "COFRE_BIOLOGICO": {
-                    "AMOSTRA_A1.TXT": "Arquivo de texto. Conteúdo removido para reduzir tamanho do código.",
-                    "AMOSTRA_B2.TXT": "Arquivo de texto. Conteúdo removido para reduzir tamanho do código.",
-                    "PROTOCOLO_QUARENTENA.TXT": "Arquivo de texto. Conteúdo removido para reduzir tamanho do código.",
+                    "AMOSTRA_A1.TXT": "LOAD_FROM_FILE",
+                    "AMOSTRA_B2.TXT": "LOAD_FROM_FILE",
+                    "PROTOCOLO_QUARENTENA.TXT": "LOAD_FROM_FILE",
                 },
                 "SERVIDOR": {
-                    "LOGS_DO_SISTEMA.TXT": "Arquivo de texto. Conteúdo removido para reduzir tamanho do código.",
-                    "CONFIGURACOES_CRITICAS.TXT": "Arquivo de texto. Conteúdo removido para reduzir tamanho do código.",
-                    "ATIVAR_SERVER_DESTRUCT.BAT": [
+                    "LOGS_DO_SISTEMA.TXT": "LOAD_FROM_FILE",
+                    "CONFIGURACOES_CRITICAS.TXT": "LOAD_FROM_FILE",
+                    "ATIVAR_SERVER_DESTRUCT.BAT": [ # Conteúdo embutido para BAT
                         "@echo off",
                         "REM Protocolo de Destruicao de Servidores da ST.AGNES Biopharma Institute",
                         "ECHO Validando credenciais de Nivel Omega para destruicao de servidor...",
@@ -93,11 +103,15 @@ class SistemaArquivos:
                         "ECHO Ativando temporizadores de detonacion em 180 segundos para servidores.",
                         "ECHO ALERTA: Todos os dados do servidor serao permanentemente apagados."
                     ],
-                    "LOGS_SERVER_DESTRUCT.TXT": "Arquivo de texto. Conteúdo removido para reduzir tamanho do código."
+                    "LOGS_SERVER_DESTRUCT.TXT": "LOAD_FROM_FILE",
                 }
             }
         }
-        self.caminho_atual = ["ST.AGNES"]
+
+        # Adiciona os relatórios de incidente e progresso aos seus respectivos diretórios
+        for i in range(1, 9):
+            self.estrutura["ST.AGNES"]["PESQUISAS"][f"RELATORIO_INCIDENTE_{i:03d}.TXT"] = "LOAD_FROM_FILE"
+            self.estrutura["ST.AGNES"]["ARQUIVO"][f"RELATORIO_DE_PROGRESSO_{i:03d}.TXT"] = "LOAD_FROM_FILE" # Mudei para ARQUIVO por lógica
 
     def get_caminho_atual_exibicao(self):
         return "C:\\" + "\\".join(self.caminho_atual) + ">"
@@ -112,7 +126,6 @@ class SistemaArquivos:
         return ponto_atual
 
     def cd(self, novo_diretorio, sistema_login_instance):
-        # O sistema_login_instance é passado como argumento agora
         novo_diretorio_limpo = novo_diretorio.strip().upper()
         
         if novo_diretorio_limpo == "..":
@@ -126,27 +139,17 @@ class SistemaArquivos:
         diretorio_alvo = self._get_diretorio_por_caminho(caminho_para_testar)
 
         if diretorio_alvo:
-            # Verifica as permissões de acesso para pastas específicas usando SISTEMA_STATUS
-            # Acesso para a pasta SERVIDOR
+            # Acesso para a pasta SERVIDOR (marcus, admin, tech)
             if novo_diretorio_limpo == "SERVIDOR" and \
                sistema_login_instance.usuario_logado not in config.SISTEMA_STATUS["SERVIDOR"]["acesso_requerido"]:
                 return ["Acesso negado: Somente o Diretor, Técnico ou Admin podem acessar a pasta SERVIDOR."]
             
-            # Acesso para a pasta PESQUISAS (onde PURGE.BAT está agora)
-            # A pasta PESQUISAS não tem restrição direta de CD, mas os arquivos dentro dela sim
-            
-            # Acesso para a pasta SERVER_DESTRUCT (que não existe mais como pasta, mas se estivesse, seria assim)
-            # if novo_diretorio_limpo == "SERVER_DESTRUCT" and \
-            #    sistema_login_instance.usuario_logado not in config.SISTEMA_STATUS["SERVER_DESTRUCT"]["acesso_requerido"]:
-            #    return ["Acesso negado: Somente o Técnico de Sistemas ou Admin podem acessar a pasta SERVER_DESTRUCT."]
-
             self.caminho_atual.append(novo_diretorio_limpo)
             return [f"Caminho alterado para {self.get_caminho_atual_exibicao()}"]
         else:
             return [f"Erro: Diretório '{novo_diretorio}' não encontrado ou inválido."]
 
     def ls(self, sistema_login_instance):
-        # O sistema_login_instance é passado como argumento agora
         respostas = []
         diretorio_atual_obj = self._get_diretorio_por_caminho(self.caminho_atual)
 
@@ -162,7 +165,6 @@ class SistemaArquivos:
                sistema_login_instance.usuario_logado not in config.SISTEMA_STATUS["SERVIDOR"]["acesso_requerido"]:
                 continue 
 
-            # PURGE.BAT está em PESQUISAS agora
             if nome == "ATIVAR_PURGE.BAT" and \
                sistema_login_instance.usuario_logado not in config.SISTEMA_STATUS["PURGE_PROTOCOLO"]["acesso_requerido"]:
                 continue
@@ -170,7 +172,6 @@ class SistemaArquivos:
                sistema_login_instance.usuario_logado not in config.SISTEMA_STATUS["PURGE_PROTOCOLO"]["acesso_requerido"]:
                 continue
             
-            # SERVER_DESTRUCT.BAT está em SERVIDOR agora
             if nome == "ATIVAR_SERVER_DESTRUCT.BAT" and \
                sistema_login_instance.usuario_logado not in config.SISTEMA_STATUS["SERVER_DESTRUCT"]["acesso_requerido"]:
                 continue
@@ -186,7 +187,6 @@ class SistemaArquivos:
         return respostas
 
     def view(self, nome_arquivo, sistema_login_instance):
-        # O sistema_login_instance é passado como argumento agora
         respostas = []
         diretorio_atual_obj = self._get_diretorio_por_caminho(self.caminho_atual)
 
@@ -196,11 +196,12 @@ class SistemaArquivos:
         nome_arquivo_limpo = nome_arquivo.strip().upper()
         
         if nome_arquivo_limpo in diretorio_atual_obj:
-            conteudo = diretorio_atual_obj[nome_arquivo_limpo]
-            if isinstance(conteudo, dict):
+            conteudo_armazenado = diretorio_atual_obj[nome_arquivo_limpo]
+
+            if isinstance(conteudo_armazenado, dict):
                 respostas.append(f"Erro: '{nome_arquivo}' é um diretório, não um arquivo. Use 'CD' para entrar nele.")
             else: # É um arquivo
-                # Verifica permissões para ver arquivos específicos
+                # Verifica permissões para ver arquivos específicos (BATs e Logs de Purga/Server Destruct)
                 if nome_arquivo_limpo == "ATIVAR_PURGE.BAT" and \
                    sistema_login_instance.usuario_logado not in config.SISTEMA_STATUS["PURGE_PROTOCOLO"]["acesso_requerido"]:
                     return ([f"Acesso negado: Você não tem permissão para visualizar '{nome_arquivo}'."], None)
@@ -217,17 +218,44 @@ class SistemaArquivos:
                    sistema_login_instance.usuario_logado not in config.SISTEMA_STATUS["SERVER_DESTRUCT"]["acesso_requerido"]:
                     return ([f"Acesso negado: Você não tem permissão para visualizar '{nome_arquivo}'."], None)
                 
-                respostas.append(f"--- CONTEÚDO DE '{nome_arquivo}' ---")
-                if isinstance(conteudo, list): # Se o conteúdo for uma lista de linhas
-                    respostas.extend(conteudo)
-                else: # Se for uma string simples
-                    respostas.append(conteudo)
-                respostas.append(f"--- FIM DO ARQUIVO ---")
+                # --- NOVO: Lógica para carregar conteúdo de TXT da pasta 'txt' ---
+                if conteudo_armazenado == "LOAD_FROM_FILE":
+                    if nome_arquivo_limpo in self.TEXT_FILES_MAP:
+                        file_name_in_txt_folder = self.TEXT_FILES_MAP[nome_arquivo_limpo]
+                        file_path = os.path.join('txt', file_name_in_txt_folder)
+                        try:
+                            with open(file_path, 'r', encoding='utf-8') as f:
+                                file_content = f.readlines() # Lê todas as linhas
+                            respostas.append(f"--- CONTEÚDO DE '{nome_arquivo}' ---")
+                            respostas.extend([line.strip() for line in file_content]) # Adiciona linhas, removendo quebras de linha
+                            respostas.append(f"--- FIM DO ARQUIVO ---")
+                            # Retorna a resposta e a sugestão de ação
+                            if nome_arquivo_limpo == "ATIVAR_PURGE.BAT":
+                                return (respostas, "ATIVAR_PURGE") 
+                            elif nome_arquivo_limpo == "ATIVAR_SERVER_DESTRUCT.BAT":
+                                return (respostas, "ATIVAR_SERVER_DESTRUCT")
+                            return (respostas, None) # Para arquivos normais
+                        except FileNotFoundError:
+                            respostas.append(f"Erro: Arquivo '{file_name_in_txt_folder}' não encontrado na pasta 'txt'.")
+                            return (respostas, None)
+                        except Exception as e:
+                            respostas.append(f"Erro ao ler '{file_name_in_txt_folder}': {e}")
+                            return (respostas, None)
+                    else:
+                        respostas.append(f"Erro interno: Mapeamento de arquivo '{nome_arquivo}' ausente para leitura de TXT.")
+                        return (respostas, None)
+                else: # Conteúdo embutido (para arquivos .BAT por exemplo)
+                    respostas.append(f"--- CONTEÚDO DE '{nome_arquivo}' ---")
+                    if isinstance(conteudo_armazenado, list): # Se o conteúdo for uma lista de linhas
+                        respostas.extend(conteudo_armazenado)
+                    else: # Se for uma string simples
+                        respostas.append(conteudo_armazenado)
+                    respostas.append(f"--- FIM DO ARQUIVO ---")
 
-                if nome_arquivo_limpo == "ATIVAR_PURGE.BAT":
-                    return (respostas, "ATIVAR_PURGE") # Sinaliza para o loop principal
-                elif nome_arquivo_limpo == "ATIVAR_SERVER_DESTRUCT.BAT":
-                    return (respostas, "ATIVAR_SERVER_DESTRUCT")
+                    if nome_arquivo_limpo == "ATIVAR_PURGE.BAT":
+                        return (respostas, "ATIVAR_PURGE") # Sinaliza para o loop principal
+                    elif nome_arquivo_limpo == "ATIVAR_SERVER_DESTRUCT.BAT":
+                        return (respostas, "ATIVAR_SERVER_DESTRUCT")
         else:
             respostas.append(f"Erro: Arquivo '{nome_arquivo}' não encontrado no diretório atual.")
         

@@ -1,0 +1,5 @@
+CONFIGURACOES CRITICAS DO SERVIDOR CENTRAL
+Acesso SSH: Desabilitado Externamente
+Porta de Acesso Interno: 22443
+Firewall: Ativo - Nivel Gamma
+Ultima Atualizacao de Seguranca: 2077/10/01

@@ -9,12 +9,17 @@ def get_menu_cientista():
     return [
         "",
         "--- MENU CIENTISTA ---",
+        "",
         "  PESQUISAS            | Acessa relatórios de pesquisa (CD PESQUISAS)",
         "  ARQUIVO              | Navega por arquivos do projeto (CD ARQUIVO)",
         "  COFRE BIOLOGICO      | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
+        "",
+        "--- COMANDOS ---",
+        "",
         "  LS                   | Lista o conteúdo da pasta atual",
-        "  CD ..                | Volta para a pasta anterior",
+        "  CD..                 | Volta para a pasta anterior",
         "  VIEW [arquivo]       | Exibe o conteúdo de um arquivo",
+        "  EXEC [arquivo]       | Executa um arquivo",
         "  LOGOUT               | Sai da sessão atual",
         "----------------------",
         ""
@@ -24,13 +29,17 @@ def get_menu_cientista_chefe():
     return [
         "",
         "--- MENU CIENTISTA CHEFE ---",
+        "",
         "  PESQUISAS            | Acessa relatórios de pesquisa (CD PESQUISAS)",
         "  ARQUIVO              | Navega por arquivos de projeto (CD ARQUIVO)",
         "  COFRE BIOLOGICO      | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
-        "  LS                   | Lista o conteúdo da pasta atual",
-        "  CD ..                | Volta para a pasta anterior",
+        "",
+        "--- COMANDOS ---",
+        "",
+        "  LS                   | Lista o conteúdo da pasta atual", 
+        "  CD..                 | Volta para a pasta anterior",
         "  VIEW [arquivo]       | Exibe o conteúdo de um arquivo",
-        "  HACK                 | Inicia o mini-game de hacking",
+        "  EXEC [arquivo]       | Executa um arquivo",        
         "  LOGOUT               | Sai da sessão atual",
         "--------------------------",
         ""
@@ -40,14 +49,18 @@ def get_menu_diretor():
     return [
         "",
         "--- MENU DIRETOR ---",
+        "",
         "  PESQUISAS            | Acessa relatórios de pesquisa (CD PESQUISAS)",
         "  ARQUIVO              | Navega por arquivos do projeto (CD ARQUIVO)",
         "  COFRE BIOLOGICO      | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
         "  SERVIDOR             | Gerencia o servidor principal (CD SERVIDOR)",
-        "  LS                   | Lista o conteúdo da pasta atual",
-        "  CD ..                | Volta para a pasta anterior",
+        "",
+        "--- COMANDOS ---",
+        "",
+        "  LS                   | Lista o conteúdo da pasta atual", 
+        "  CD..                 | Volta para a pasta anterior",
         "  VIEW [arquivo]       | Exibe o conteúdo de um arquivo",
-        "  HACK                 | Inicia o mini-game de hacking",
+        "  EXEC [arquivo]       | Executa um arquivo",        
         "  LOGOUT               | Sai da sessão atual",
         "--------------------",
         ""
@@ -57,12 +70,16 @@ def get_menu_tech():
     return [
         "",
         "--- MENU TÉCNICO DE SISTEMAS ---",
+        "",
         "  COFRE BIOLOGICO      | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
         "  SERVIDOR             | Gerencia o servidor principal (CD SERVIDOR)",
+        "",
+        "--- COMANDOS ---",
+        "",
         "  LS                   | Lista o conteúdo da pasta atual",
-        "  CD ..                | Volta para a pasta anterior",
+        "  CD..                 | Volta para a pasta anterior",
         "  VIEW [arquivo]       | Exibe o conteúdo de um arquivo",
-        "  HACK                 | Inicia o mini-game de hacking",
+        "  EXEC [arquivo]       | Executa um arquivo",
         "  LOGOUT               | Sai da sessão atual",
         "------------------------------",
         ""
@@ -72,21 +89,25 @@ def get_menu_admin():
     return [
         "",
         "--- MENU ADMINISTRADOR ---",
+        "",
         "  PESQUISAS            | Acessa relatórios de pesquisa (CD PESQUISAS)",
         "  ARQUIVO              | Navega por arquivos do projeto (CD ARQUIVO)",
         "  COFRE BIOLOGICO      | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
         "  SERVIDOR             | Gerencia o servidor principal (CD SERVIDOR)",
-        "  LS                   | Lista o conteúdo da pasta atual",
-        "  CD ..                | Volta para a pasta anterior",
+        "",
+        "--- COMANDOS ---",
+        "",
+        "  LS                   | Lista o conteúdo da pasta atual", 
+        "  CD..                 | Volta para a pasta anterior",
         "  VIEW [arquivo]       | Exibe o conteúdo de um arquivo",
-        "  HACK                 | Inicia o mini-game de hacking",
+        "  EXEC [arquivo]       | Executa um arquivo",        
         "  LOGOUT               | Sai da sessão atual",
         "--------------------------",
         ""
     ]
 
 def get_menu_inicial_mensagens():
-    """Retorna as mensagens iniciais exibidas no terminal."""
+    """Retorna apenas as instruções de HELP e LOGON."""
     return [
         "Digite 'HELP' para uma lista de comandos.",
         "Para iniciar, digite 'LOGON [seu usuario]'."
@@ -116,8 +137,8 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
         respostas.append("  cd [diretorio]       | Muda para o diretório especificado")
         respostas.append("  ls                   | Lista o conteúdo do diretório atual")
         respostas.append("  view [arquivo]       | Exibe o conteúdo de um arquivo")
-        respostas.append("  exec [arquivo]       | Executa/Exibe o conteúdo de um arquivo")
-        respostas.append("  hack                 | Inicia o mini-game de hacking")
+        respostas.append("  exec [arquivo]       | Executa o conteúdo de um arquivo")
+        # REMOVIDO: respostas.append("  hack                 | Inicia o mini-game de hacking"),
         respostas.append("  clear                | Limpa a tela do terminal")
         respostas.append("")
         sugestao_som_tocar = "valid"
@@ -169,14 +190,13 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
             partes = comando_limpo.split(" ", 1)
             if len(partes) > 1:
                 nome_arquivo_alvo = partes[1].strip()
-                # A função view agora recebe sistema_login_instance
                 view_respostas, view_sugestao = sistema_arquivos_instance.view(nome_arquivo_alvo, sistema_login_instance)
                 respostas.extend(view_respostas)
                 if view_sugestao:
                     sugestao_proximo_estado = view_sugestao
                     sugestao_som_tocar = "valid"
                 else:
-                    sugestao_som_tocar = "valid"
+                    sugestao_som_tocar = "invalid" # View de algo que não existe/sem permissão
             else:
                 respostas.append("Uso: VIEW [arquivo]")
                 sugestao_som_tocar = "invalid"
@@ -188,74 +208,22 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
             partes = comando_limpo.split(" ", 1)
             if len(partes) > 1:
                 nome_arquivo_alvo = partes[1].strip()
-                # A função view agora recebe sistema_login_instance
                 exec_respostas, exec_sugestao = sistema_arquivos_instance.view(nome_arquivo_alvo, sistema_login_instance)
                 respostas.extend(exec_respostas)
                 if exec_sugestao:
                     sugestao_proximo_estado = exec_sugestao
                     sugestao_som_tocar = "valid"
                 else:
-                    sugestao_som_tocar = "valid"
+                    sugestao_som_tocar = "invalid" # Executar algo que não existe ou sem permissão é inválido
             else:
                 respostas.append("Uso: EXEC [arquivo]")
                 sugestao_som_tocar = "invalid"
         else:
             respostas.append("Acesso negado. Por favor, faça login.")
             sugestao_som_tocar = "invalid"
-    elif comando_limpo == "HACK":
-        if sistema_login_instance.esta_logado() and \
-           sistema_login_instance.usuario_logado in ["marcus", "chefe", "admin", "tech"]:
-            
-            sugestao_proximo_estado = "HACKING"
-            
-            dados_hacking = {}
-            comprimento_alvo = random.choice([6, 7, 8, 9])
-            palavras_filtradas = [p for p in config.HACKING_PALAVRAS_BASE if len(p) == comprimento_alvo]
-            
-            if len(palavras_filtradas) < config.HACKING_MAX_TENTATIVAS * 2:
-                palavras_filtradas = [p for p in config.HACKING_PALAVRAS_BASE if len(p) >= 6]
-
-            sequencias_geradas = []
-            for _ in range(config.NUM_SEQUENCIAS_ESPECIAIS):
-                tipo_seq_info = random.choice(config.HACKING_TIPOS_ESPECIAIS)
-                open_char = tipo_seq_info[1]
-                close_char = tipo_seq_info[2]
-                junk_content = ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=random.randint(1, 3)))
-                sequencia_completa = f"{open_char}{junk_content}{close_char}"
-                sequencias_geradas.append((sequencia_completa, tipo_seq_info[0]))
-            
-            todas_opcoes = list(palavras_filtradas)
-            for seq_str, _ in sequencias_geradas:
-                todas_opcoes.append(seq_str)
-            random.shuffle(todas_opcoes)
-            
-            if len(todas_opcoes) < 10 and len(config.HACKING_PALAVRAS_BASE) > len(todas_opcoes):
-                while len(todas_opcoes) < 10:
-                    palavra_nova = random.choice(config.HACKING_PALAVRAS_BASE)
-                    if len(palavra_nova) == comprimento_alvo and palavra_nova not in todas_opcoes:
-                        todas_opcoes.append(palavra_nova)
-            
-            dados_hacking['palavras'] = todas_opcoes
-            
-            palavras_sem_sequencias = [p for p in todas_opcoes if p not in [s[0] for s in sequencias_geradas]]
-            if palavras_sem_sequencias:
-                dados_hacking['senha_correta'] = random.choice(palavras_sem_sequencias)
-            else:
-                dados_hacking['senha_correta'] = random.choice(palavras_filtradas)
-            
-            dados_hacking['tentativas_restantes'] = config.HACKING_MAX_TENTATIVAS
-            dados_hacking['likeness_ultima_tentativa'] = -1
-            dados_hacking['sequencias_ativas'] = {seq_str: tipo_ef for seq_str, tipo_ef in sequencias_geradas}
-            
-            dados_proximo_estado = dados_hacking
-            
-            respostas.append("Iniciando Hacking Protocol...")
-            sugestao_som_tocar = "valid"
-            
-        else:
-            respostas.append("Acesso negado: Somente o Diretor, Cientista Chefe, Técnico ou Admin podem iniciar o Hacking.")
-            respostas.append("Faça login com um usuário autorizado.")
-            sugestao_som_tocar = "invalid"
+    elif comando_limpo == "HACK": # A lógica do HACK ainda precisa existir, mas não será listada nos menus
+        respostas.append("Comando HACK não disponível diretamente no menu. Utilize a sequência de OVERRIDE.")
+        sugestao_som_tocar = "invalid"
     elif comando_limpo.startswith("STATUS"):
         if sistema_login_instance.esta_logado():
             partes = comando_limpo.split(" ", 1)
@@ -297,7 +265,7 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
             respostas.extend(sistema_arquivos_instance.ls(sistema_login_instance))
             sugestao_som_tocar = "valid"
         else:
-            respostas.append("Acesso negado. Por favor, faça login.")
+            respostas.append("Acesso negado. Por favor, faça login (LOGON [user]).")
             sugestao_som_tocar = "invalid"
     elif comando_limpo == "CLEAR":
         sugestao_proximo_estado = "CLEAR_SCREEN"

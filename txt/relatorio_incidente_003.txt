@@ -1,0 +1,4 @@
+RELATORIO DE INCIDENTE #003
+Data: 2077/10/06
+Descricao: Detecao de acesso nao autorizado ao log do servidor de backup. Investigacao em andamento.
+Status: Em alerta.
