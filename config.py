@@ -99,7 +99,10 @@ SOM_LOGIN_SUCCESS = os.path.join('sons', 'login_success.mp3')
 SOM_LOGIN_FAIL = os.path.join('sons', 'login_fail.mp3')
 SOM_SHUTDOWN = os.path.join('sons', 'shutdown.mp3')
 MUSICA_PURGE_ALERTA = os.path.join('sons', 'purge_alert.mp3')
-MUSICA_SERVER_DESTRUCT_ALERTA = os.path.join('sons', 'server_destruct_alert.mp3') 
+
+# ALTERADO AQUI: Agora é uma lista de caminhos para as 3 músicas de SERVER_DESTRUCT
+MUSICAS_SERVER_DESTRUCT_ALERTA = [os.path.join('sons', f'server_destruct_alert_{i}.mp3') for i in range(3)]
+
 
 # --- Configurações de Protocolo de Autodestruição (Purge/Server Destruct) ---
 PURGE_TEMPO_TOTAL_SEGUNDOS = 15 * 60 # 15 minutos (900 segundos)

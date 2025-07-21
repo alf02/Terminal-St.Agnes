@@ -18,7 +18,7 @@ def initialize_hacking_game_data():
     dados_hacking = {}
     
     # Escolhe um comprimento aleatório para a senha
-    comprimento_alvo = random.choice([6, 7, 8, 9, 10]) # Aumentei um pouco a variedade de comprimentos
+    comprimento_alvo = random.choice([6, 7, 8, 9, 10]) 
     
     # Filtra as palavras base que correspondem ao comprimento alvo
     palavras_filtradas = [p for p in config.HACKING_PALAVRAS_BASE if len(p) == comprimento_alvo]
@@ -65,5 +65,9 @@ def initialize_hacking_game_data():
     dados_hacking['tentativas_restantes'] = config.HACKING_MAX_TENTATIVAS
     dados_hacking['likeness_ultima_tentativa'] = -1 # Nenhuma tentativa ainda
     dados_hacking['sequencias_ativas'] = {seq_str: tipo_ef for seq_str, tipo_ef in sequencias_geradas}
+    
+    print(f"DEBUG_HACK_INIT: Senha correta gerada: {dados_hacking['senha_correta']}")
+    print(f"DEBUG_HACK_INIT: Palavras possíveis: {dados_hacking['palavras']}")
+    print(f"DEBUG_HACK_INIT: Sequências ativas: {dados_hacking['sequencias_ativas']}")
     
     return dados_hacking
