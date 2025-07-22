@@ -101,13 +101,13 @@ def play_sound(sound_type):
         if pygame.mixer.music.get_busy(): # Para a música de fundo se estiver tocando (para outros sons pequenos)
             pygame.mixer.music.stop()
         sounds[sound_type].play()
-# Todas as variáveis globais que podem ser MODIFICADAS NESTE BLOCO de KEYDOWN.
-global comando_atual, estado_terminal, usuario_tentando_logar, \
-        historico_comandos, historico_indice, \
-        hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
-        hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, hacking_sequencias_ativas, \
-        purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, protocolo_atual_nome, \
-        shutdown_start_time, hack_initiated_by_backdoor, hack_restart_delay_start_time
+    # Todas as variáveis globais que podem ser MODIFICADAS NESTE BLOCO de KEYDOWN.
+    global comando_atual, estado_terminal, usuario_tentando_logar, \
+    historico_comandos, historico_indice, \
+    hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
+    hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, hacking_sequencias_ativas, \
+    purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, protocolo_atual_nome, \
+    shutdown_start_time, hack_initiated_by_backdoor, hack_restart_delay_start_time
 # --- LOOP PRINCIPAL DO PROGRAMA (ENGLOBANDO TUDO PARA REINICIALIZAÇÃO) ---
 while True: # Loop externo para reiniciar o terminal completamente
 
@@ -158,7 +158,7 @@ while True: # Loop externo para reiniciar o terminal completamente
     mensagens_historico.append("") # Adiciona uma linha em branco final para espaçamento
 
     # --- Chamada das Telas Iniciais ---
-    screens.mostrar_tela_inicial(screen, fonts) # Título específico do Laboratório
+    screens.mostrar_tela_inicial(screen, fonts, "ST.AGNES BIOPHARMA INSTITUTE") # Título específico do Laboratório
     screens.mostrar_tela_loading(screen, fonts, sounds)
 
     # CRÍTICO: Limpar a fila de eventos APÓS as telas iniciais
@@ -283,28 +283,27 @@ while True: # Loop externo para reiniciar o terminal completamente
                                         purge_mensagem_adicional = "Validando credenciais para Protocolo de Purga..."
                                         protocolo_atual_nome = "PURGE"
                                         if sounds.get('purge_alert') and not pygame.mixer.music.get_busy():
-                                            play_sound("purge_alert") # Chamar play_sound diretamente com o tipo
-                                        luz_api.ligar_piscar_vermelho() # Liga as luzes
+                                            play_sound("purge_alert") 
+                                        luz_api.ligar_piscar_vermelho() 
                                         estado_terminal = "PURGE_CONTADOR"
                                     elif sugestao_proximo_estado == "ATIVAR_SERVER_DESTRUCT":
                                         purge_protocolo_ativo = True
                                         purge_tempo_inicio_ticks = pygame.time.get_ticks()
                                         purge_mensagem_adicional = "Validando credenciais para Destruicao de Servidor..."
                                         protocolo_atual_nome = "SERVER_DESTRUCT"
-                                        # NOVO: Chamar play_sound com o tipo especial para tocar aleatoriamente
-                                        play_sound("server_destruct_alert_random") # Alterado para nova música
-                                        luz_api.ligar_piscar_vermelho() # Liga as luzes
+                                        play_sound("server_destruct_alert_random") 
+                                        luz_api.ligar_piscar_vermelho() 
                                         estado_terminal = "PURGE_CONTADOR"
                                     
-                                    comando_atual = "" # Limpa comando após processamento
+                                    comando_atual = "" 
                             
-                            else: # Se o usuário só apertar ENTER no modo de comando (com comando_atual vazio)
+                            else: 
                                 mensagens_historico.append(linha_digitada_no_historico)
                                 comando_atual = ""
                                 play_sound("invalid_command")
                         
                         elif estado_terminal == "AGUARDANDO_SENHA":
-                            senha_digitada = comando_atual.strip().lower() # Senhas devem ser verificadas em lowercase
+                            senha_digitada = comando_atual.strip().lower() 
                             mensagens_historico.append("****") 
                             
                             if sistema_login.verificar_credenciais(usuario_tentando_logar, senha_digitada):
@@ -325,17 +324,16 @@ while True: # Loop externo para reiniciar o terminal completamente
 
                             else:
                                 mensagens_historico.append("Senha incorreta. Acesso negado.")
-                                sistema_login.deslogar() # Desloga em caso de falha
+                                sistema_login.deslogar() 
                                 play_sound("login_fail")
 
-                            estado_terminal = "AGUARDANDO_COMANDO" # Retorna ao estado de comando após login ou falha
-                            comando_atual = "" # Limpa o comando para o próximo input
-                            usuario_tentando_logar = "" # Limpa o usuário que estava tentando logar
+                            estado_terminal = "AGUARDANDO_COMANDO" 
+                            comando_atual = "" 
+                            usuario_tentando_logar = "" 
                         
                         elif estado_terminal == "HACKING":
-                            palpite = comando_atual.strip().upper() # Hacking usa maiúsculas para comparação
+                            palpite = comando_atual.strip().upper() 
 
-                            # Lógica para sequências especiais (dud, attempt)
                             if palpite in hacking_sequencias_ativas:
                                 efeito = hacking_sequencias_ativas[palpite]
                                 mensagens_historico.append(f"GUESS > {palpite}")
@@ -343,10 +341,9 @@ while True: # Loop externo para reiniciar o terminal completamente
                                 play_sound("valid_command")
 
                                 if efeito == "dud":
-                                    # Tenta remover uma palavra aleatória que não seja a senha ou outra sequência especial
                                     duds_removiveis = [
                                         p for p in hacking_palavras_possiveis 
-                                        if p != hacking_senha_correta and p not in hacking_sequencias_ativas # Não remove a senha ou outras sequências
+                                        if p != hacking_senha_correta and p not in hacking_sequencias_ativas 
                                     ]
                                     if duds_removiveis:
                                         dud_removido = random.choice(duds_removiveis)
@@ -360,12 +357,11 @@ while True: # Loop externo para reiniciar o terminal completamente
                                 hacking_tentativas_restantes += 1
                                 mensagens_historico.append(f"Tentativa adicional concedida. Tentativas restantes: {hacking_tentativas_restantes}")
                             
-                                # Remove a sequência especial usada para que não possa ser reutilizada
-                                if palpite in hacking_palavras_possiveis: # Certifica-se de que a sequência está na lista antes de tentar remover
+                                if palpite in hacking_palavras_possiveis: 
                                     hacking_palavras_possiveis.remove(palpite)
-                                hacking_sequencias_ativas.pop(palpite, None) # Remove do dicionário de ativas
+                                hacking_sequencias_ativas.pop(palpite, None) 
 
-                            elif palpite in hacking_palavras_possiveis: # Palpite é uma palavra normal
+                            elif palpite in hacking_palavras_possiveis: 
                                 mensagens_historico.append(f"GUESS > {palpite}")
                                 
                                 if palpite == hacking_senha_correta:
@@ -375,59 +371,59 @@ while True: # Loop externo para reiniciar o terminal completamente
                                     estado_terminal = "AGUARDANDO_COMANDO"
                                 else:
                                     hacking_tentativas_restantes -= 1
-                                    likeness = hacking_logic._calcular_likeness(palpite, hacking_senha_correta) # Usa a função do hacking_logic
+                                    likeness = hacking_logic._calcular_likeness(palpite, hacking_senha_correta) 
                                     hacking_likeness_ultima_tentativa = likeness
                                     mensagens_historico.append(f"Senha incorreta. Similaridade: {likeness}/{len(hacking_senha_correta)}")
                                     mensagens_historico.append(f"Tentativas restantes: {hacking_tentativas_restantes}")
                                     play_sound("invalid_command")
 
-                                    if hacking_tentativas_restantes <= 0: # Fim das tentativas
-                                        if hack_initiated_by_backdoor: # Se foi por backdoor, reinicia
+                                    if hacking_tentativas_restantes <= 0: 
+                                        if hack_initiated_by_backdoor: 
                                             mensagens_historico.append(f"Tentativas esgotadas. Terminal bloqueado.")
                                             mensagens_historico.append(f"A senha era: {hacking_senha_correta}")
-                                            mensagens_historico.append(f"Reiniciando protocolo de hacking em\n{int(config.HACK_RESTART_DURATION_MS / 1000)} segundos...") # Quebra de linha
+                                            mensagens_historico.append(f"Reiniciando protocolo de hacking em\n{int(config.HACK_RESTART_DURATION_MS / 1000)} segundos...") 
                                             play_sound("login_fail")
                                             
-                                            hacking_game_ativo = False # Desativa o jogo de hacking atual
-                                            estado_terminal = "HACK_RESTART_DELAY" # Transiciona para o estado de atraso
+                                            hacking_game_ativo = False 
+                                            estado_terminal = "HACK_RESTART_DELAY" 
                                             hack_restart_delay_start_time = pygame.time.get_ticks()
-                                            hack_initiated_by_backdoor = False # Reseta a flag para o próximo hack
-                                        else: # Se foi hack normal, bloqueia permanentemente
+                                            hack_initiated_by_backdoor = False 
+                                        else: 
                                             mensagens_historico.append(f"Tentativas esgotadas. TERMINAL BLOQUEADO.")
-                                            mensagens_historico.append("Este terminal requer\nreinicializacao manual para reativar.") # Quebra de linha
+                                            mensagens_historico.append("Este terminal requer\nreinicializacao manual para reativar.") 
                                             play_sound("login_fail")
                                             
-                                            hacking_game_ativo = False # Desativa o jogo de hacking
-                                            estado_terminal = "TERMINAL_BLOQUEADO" # Bloqueio permanente
-                            else: # Palpite não é reconhecido
+                                            hacking_game_ativo = False 
+                                            estado_terminal = "TERMINAL_BLOQUEADO" 
+                            else: 
                                 mensagens_historico.append(f"GUESS > {palpite}")
                                 mensagens_historico.append(f"'{palpite}' não é uma senha válida. Tente novamente.")
                                 play_sound("invalid_command")
                             
-                            comando_atual = "" # Limpa comando após palpite
+                            comando_atual = "" 
 
                     elif evento.key == pygame.K_BACKSPACE:
-                        if comando_atual: # Só apaga se houver algo para apagar
+                        if comando_atual: 
                             comando_atual = comando_atual[:-1]
                             historico_indice = -1 
                     elif evento.key == pygame.K_UP:
                         if historico_comandos:
-                            if historico_indice == -1: # Se não estava navegando, vai para o último comando
+                            if historico_indice == -1: 
                                 historico_indice = len(historico_comandos) - 1
-                            elif historico_indice > 0: # Vai para o comando anterior
+                            elif historico_indice > 0: 
                                 historico_indice -= 1
                             comando_atual = historico_comandos[historico_indice]
                         
                     elif evento.key == pygame.K_DOWN:
                         if historico_comandos:
-                            if historico_indice < len(historico_comandos) - 1: # Vai para o próximo comando
+                            if historico_indice < len(historico_comandos) - 1: 
                                 historico_indice += 1
                                 comando_atual = historico_comandos[historico_indice]
-                            elif historico_indice == len(historico_comandos) - 1: # Se já estava no último, limpa
+                            elif historico_indice == len(historico_comandos) - 1: 
                                 historico_indice = -1
                                 comando_atual = "" 
                                 
-                    else: # Este é o bloco para caracteres digitáveis gerais
+                    else: 
                         if evento.unicode and evento.unicode.isprintable():
                             if estado_terminal == "AGUARDANDO_SENHA":
                                 comando_atual += evento.unicode
@@ -437,45 +433,40 @@ while True: # Loop externo para reiniciar o terminal completamente
 
 
         # --- Renderização da Tela Baseada no Estado ---
-        screen.fill(config.COR_FUNDO) # Limpa a tela a cada frame
+        screen.fill(config.COR_FUNDO) 
 
         if estado_terminal == "PURGE_CONTADOR":
             current_time_ticks = pygame.time.get_ticks()
             screens.draw_purge_countdown_screen(screen, fonts, purge_tempo_inicio_ticks, protocolo_atual_nome, current_time_ticks)
             
-            # Lógica de transição após o fim da contagem (re-checa aqui para garantir)
             tempo_passado_segundos = (current_time_ticks - purge_tempo_inicio_ticks) / 1000
             if tempo_passado_segundos >= config.PURGE_TEMPO_TOTAL_SEGUNDOS:
                 mensagens_historico.append(f"Protocolo de {protocolo_atual_nome} concluído. Sistema desligando.")
-                if pygame.mixer.music.get_busy(): # Para a música se estiver tocando
+                if pygame.mixer.music.get_busy(): 
                     pygame.mixer.music.stop()
-                # DESLIGA LUMINÁRIAS QUANDO PROTOCOLO TERMINA
                 luz_api.desligar_piscar_vermelho() 
                 
-                play_sound("shutdown") # Toca o som de shutdown
-                estado_terminal = "DESLIGANDO" # Transiciona para o desligamento
+                play_sound("shutdown") 
+                estado_terminal = "DESLIGANDO" 
                 shutdown_start_time = pygame.time.get_ticks()
 
         elif estado_terminal == "DESLIGANDO":
             current_time_ticks = pygame.time.get_ticks()
             screens.draw_shutdown_animation(screen, fonts, shutdown_start_time)
             
-            # Transição final para reiniciar o loop externo
             tempo_desligamento_passado = (current_time_ticks - shutdown_start_time) / 1000
-            if tempo_desligamento_passado >= 4.0: # Duração da animação de desligamento
-                rodando = False # Sai do loop interno, permitindo que o loop externo reinicie
+            if tempo_desligamento_passado >= 4.0: 
+                rodando = False 
 
         elif estado_terminal == "TERMINAL_BLOQUEADO":
-            screens.draw_terminal_blocked_screen(screen, fonts, tempo_frame) # tempo_frame é o current_time_ticks
+            screens.draw_terminal_blocked_screen(screen, fonts, tempo_frame) 
 
         elif estado_terminal == "HACK_RESTART_DELAY":
             current_time_ticks = pygame.time.get_ticks()
             screens.draw_hack_restart_delay_screen(screen, fonts, hack_restart_delay_start_time, current_time_ticks)
 
-            # Lógica de transição para reiniciar o hacking
             tempo_atraso_passado = (current_time_ticks - hack_restart_delay_start_time) / 1000
             if tempo_atraso_passado >= config.HACK_RESTART_DURATION_MS / 1000:
-                # Reinicializa o hacking game
                 dados_hacking = hacking_logic.initialize_hacking_game_data()
                 hacking_game_ativo = True
                 hacking_palavras_possiveis = dados_hacking['palavras']
@@ -483,7 +474,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                 hacking_tentativas_restantes = dados_hacking['tentativas_restantes']
                 hacking_likeness_ultima_tentativa = dados_hacking['likeness_ultima_tentativa']
                 hacking_sequencias_ativas = dados_hacking['sequencias_ativas']
-                hack_initiated_by_backdoor = True # Hack por backdoor ao reiniciar
+                hack_initiated_by_backdoor = True 
 
                 mensagens_historico.append("Reiniciando hacking...")
                 mensagens_historico.append(f"Senhas possíveis (comprimento {len(hacking_senha_correta)}):")
@@ -497,23 +488,18 @@ while True: # Loop externo para reiniciar o terminal completamente
                 comando_atual = ""
                 play_sound("valid_command")
                 
-        else: # Renderização normal do terminal (AGUARDANDO_COMANDO, HACKING ativo com digitação)
-            # Calcula o y_offset para o prompt fixo na parte inferior
+        else: 
             prompt_y_offset = config.ALTURA_TELA - (config.TAMANHO_FONTE + 10) 
             
-            # Define a margem superior para o histórico
             top_margin_history = 10 
 
-            # Calcula o número máximo de linhas do histórico que cabem entre a margem superior e o prompt
             max_linhas_visiveis_acima_prompt = int((prompt_y_offset - top_margin_history) / (config.TAMANHO_FONTE + 2)) 
 
-            # Renderiza as mensagens do histórico, começando da margem superior
             for i, linha in enumerate(mensagens_historico[-max_linhas_visiveis_acima_prompt:]):
                 texto_renderizado = fonts['normal'].render(linha, True, config.COR_TEXTO)
                 screen.blit(texto_renderizado, (10, top_margin_history + i * (config.TAMANHO_FONTE + 2)))
 
 
-            # --- Renderiza o prompt e o comando atual ---
             prompt_texto = "> "
             if estado_terminal == "AGUARDANDO_SENHA":
                 prompt_texto = "Password: "
@@ -521,12 +507,11 @@ while True: # Loop externo para reiniciar o terminal completamente
             elif estado_terminal == "HACKING":
                 prompt_texto = "GUESS > "
                 texto_renderizado_comando = fonts['normal'].render(prompt_texto + comando_atual, True, config.COR_TEXTO)
-            else: # AGUARDANDO_COMANDO
+            else: 
                 texto_renderizado_comando = fonts['normal'].render(sistema_arquivos.get_caminho_atual_exibicao() + comando_atual, True, config.COR_TEXTO)
 
             screen.blit(texto_renderizado_comando, (10, prompt_y_offset))
 
-            # Lógica para o cursor piscando na linha de comando atual
             tempo_atual = pygame.time.get_ticks()
             if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY"] and mostrar_cursor:
                 cursor_pos_x = 10 + texto_renderizado_comando.get_width()
@@ -537,7 +522,6 @@ while True: # Loop externo para reiniciar o terminal completamente
                 mostrar_cursor = not mostrar_cursor
                 ultimo_tick_cursor = tempo_atual
 
-            # --- Aplica os Efeitos de Glitch (ANTES DO SCANLINE E FLIP) ---
             if glitch_ativo and estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY"]:
                 if glitch_tipo == 'shift':
                     shift_x = random.randint(-config.GLITCH_SHIFT_MAX, config.GLITCH_SHIFT_MAX)
@@ -555,7 +539,6 @@ while True: # Loop externo para reiniciar o terminal completamente
                     flicker_surface.fill((config.COR_TEXTO[0], config.COR_TEXTO[1], config.COR_TEXTO[2], random.randint(20, 80)))
                     screen.blit(flicker_surface, (0,0))
             
-            # --- Efeito de Scanline (CRT) ---
             for y in range(0, config.ALTURA_TELA, 3):
                 pygame.draw.line(screen, config.COR_SCANLINE, (0, y), (config.LARGURA_TELA, y)) 
             
@@ -563,9 +546,6 @@ while True: # Loop externo para reiniciar o terminal completamente
 
             pygame.time.Clock().tick(60)
 
-# Sai do loop externo apenas se a flag 'rodando' for False (indicando QUIT ou ESC)
-# Se o loop interno termina por EXIT/SHUTDOWN/PURGE, ele reinicia o loop externo
 if not rodando: 
-    # Sai do 'while True' externo e encerra o programa
     pygame.quit()
     sys.exit()

@@ -10,17 +10,17 @@ def get_menu_cientista():
         "",
         "--- MENU CIENTISTA ---",
         "",
-        "  PESQUISAS            | Acessa relatórios de pesquisa (CD PESQUISAS)",
-        "  ARQUIVO              | Navega por arquivos do projeto (CD ARQUIVO)",
-        "  COFRE BIOLOGICO      | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
+        "   PESQUISAS           | Acessa relatórios de pesquisa (CD PESQUISAS)",
+        "   ARQUIVO             | Navega por arquivos do projeto (CD ARQUIVO)",
+        "   COFRE BIOLOGICO     | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
         "",
         "--- COMANDOS ---",
         "",
-        "  LS                   | Lista o conteúdo da pasta atual",
-        "  CD..                 | Volta para a pasta anterior",
-        "  VIEW [arquivo]       | Exibe o conteúdo de um arquivo",
-        "  EXEC [arquivo]       | Executa um arquivo",
-        "  LOGOUT               | Sai da sessão atual",
+        "   LS                  | Lista o conteúdo da pasta atual",
+        "   CD..                | Volta para a pasta anterior",
+        "   VIEW [arquivo]      | Exibe o conteúdo de um arquivo",
+        "   EXEC [arquivo]      | Executa um arquivo",
+        "   LOGOUT              | Sai da sessão atual",
         "----------------------",
         ""
     ]
@@ -30,17 +30,17 @@ def get_menu_cientista_chefe():
         "",
         "--- MENU CIENTISTA CHEFE ---",
         "",
-        "  PESQUISAS            | Acessa relatórios de pesquisa (CD PESQUISAS)",
-        "  ARQUIVO              | Navega por arquivos de projeto (CD ARQUIVO)",
-        "  COFRE BIOLOGICO      | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
+        "   PESQUISAS           | Acessa relatórios de pesquisa (CD PESQUISAS)",
+        "   ARQUIVO             | Navega por arquivos de projeto (CD ARQUIVO)",
+        "   COFRE BIOLOGICO     | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
         "",
         "--- COMANDOS ---",
         "",
-        "  LS                   | Lista o conteúdo da pasta atual", 
-        "  CD..                 | Volta para a pasta anterior",
-        "  VIEW [arquivo]       | Exibe o conteúdo de um arquivo",
-        "  EXEC [arquivo]       | Executa um arquivo",        
-        "  LOGOUT               | Sai da sessão atual",
+        "   LS                  | Lista o conteúdo da pasta atual", 
+        "   CD..                | Volta para a pasta anterior",
+        "   VIEW [arquivo]      | Exibe o conteúdo de um arquivo",
+        "   EXEC [arquivo]      | Executa um arquivo",         
+        "   LOGOUT              | Sai da sessão atual",
         "--------------------------",
         ""
     ]
@@ -50,18 +50,18 @@ def get_menu_diretor():
         "",
         "--- MENU DIRETOR ---",
         "",
-        "  PESQUISAS            | Acessa relatórios de pesquisa (CD PESQUISAS)",
-        "  ARQUIVO              | Navega por arquivos do projeto (CD ARQUIVO)",
-        "  COFRE BIOLOGICO      | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
-        "  SERVIDOR             | Gerencia o servidor principal (CD SERVIDOR)",
+        "   PESQUISAS           | Acessa relatórios de pesquisa (CD PESQUISAS)",
+        "   ARQUIVO             | Navega por arquivos do projeto (CD ARQUIVO)",
+        "   COFRE BIOLOGICO     | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
+        "   SERVIDOR            | Gerencia o servidor principal (CD SERVIDOR)",
         "",
         "--- COMANDOS ---",
         "",
-        "  LS                   | Lista o conteúdo da pasta atual", 
-        "  CD..                 | Volta para a pasta anterior",
-        "  VIEW [arquivo]       | Exibe o conteúdo de um arquivo",
-        "  EXEC [arquivo]       | Executa um arquivo",        
-        "  LOGOUT               | Sai da sessão atual",
+        "   LS                  | Lista o conteúdo da pasta atual", 
+        "   CD..                | Volta para a pasta anterior",
+        "   VIEW [arquivo]      | Exibe o conteúdo de um arquivo",
+        "   EXEC [arquivo]      | Executa um arquivo",         
+        "   LOGOUT              | Sai da sessão atual",
         "--------------------",
         ""
     ]
@@ -71,16 +71,16 @@ def get_menu_tech():
         "",
         "--- MENU TÉCNICO DE SISTEMAS ---",
         "",
-        "  COFRE BIOLOGICO      | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
-        "  SERVIDOR             | Gerencia o servidor principal (CD SERVIDOR)",
+        "   COFRE BIOLOGICO     | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
+        "   SERVIDOR            | Gerencia o servidor principal (CD SERVIDOR)",
         "",
         "--- COMANDOS ---",
         "",
-        "  LS                   | Lista o conteúdo da pasta atual",
-        "  CD..                 | Volta para a pasta anterior",
-        "  VIEW [arquivo]       | Exibe o conteúdo de um arquivo",
-        "  EXEC [arquivo]       | Executa um arquivo",
-        "  LOGOUT               | Sai da sessão atual",
+        "   LS                  | Lista o conteúdo da pasta atual",
+        "   CD..                | Volta para a pasta anterior",
+        "   VIEW [arquivo]      | Exibe o conteúdo de um arquivo",
+        "   EXEC [arquivo]      | Executa um arquivo",
+        "   LOGOUT              | Sai da sessão atual",
         "------------------------------",
         ""
     ]
@@ -90,18 +90,18 @@ def get_menu_admin():
         "",
         "--- MENU ADMINISTRADOR ---",
         "",
-        "  PESQUISAS            | Acessa relatórios de pesquisa (CD PESQUISAS)",
-        "  ARQUIVO              | Navega por arquivos do projeto (CD ARQUIVO)",
-        "  COFRE BIOLOGICO      | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
-        "  SERVIDOR             | Gerencia o servidor principal (CD SERVIDOR)",
+        "   PESQUISAS           | Acessa relatórios de pesquisa (CD PESQUISAS)",
+        "   ARQUIVO             | Navega por arquivos do projeto (CD ARQUIVO)",
+        "   COFRE BIOLOGICO     | Gerencia amostras biológicas (CD COFRE_BIOLOGICO)",
+        "   SERVIDOR            | Gerencia o servidor principal (CD SERVIDOR)",
         "",
         "--- COMANDOS ---",
         "",
-        "  LS                   | Lista o conteúdo da pasta atual", 
-        "  CD..                 | Volta para a pasta anterior",
-        "  VIEW [arquivo]       | Exibe o conteúdo de um arquivo",
-        "  EXEC [arquivo]       | Executa um arquivo",        
-        "  LOGOUT               | Sai da sessão atual",
+        "   LS                  | Lista o conteúdo da pasta atual", 
+        "   CD..                | Volta para a pasta anterior",
+        "   VIEW [arquivo]      | Exibe o conteúdo de um arquivo",
+        "   EXEC [arquivo]      | Executa um arquivo",         
+        "   LOGOUT              | Sai da sessão atual",
         "--------------------------",
         ""
     ]
@@ -115,8 +115,6 @@ def get_menu_inicial_mensagens():
 
 # --- Função para Processar Comandos (AGORA RETORNA SUGESTÕES DE ESTADO) ---
 def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance, play_sound_callback):
-    # sistema_login_instance e sistema_arquivos_instance são instâncias de suas respectivas classes
-    # play_sound_callback é a função play_sound do main.py (passada como callback para evitar dependência circular)
     
     comando_limpo = comando.strip().upper()
     respostas = []
@@ -127,19 +125,18 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
 
     if comando_limpo == "HELP":
         respostas.append("")
-        respostas.append("  logon [usuario]      | Entrar com um usuário específico")
+        respostas.append("   logon [usuario]     | Entrar com um usuário específico")
         if sistema_login_instance.esta_logado():
-            respostas.append("  logout               | Sair da sessão atual")
-        respostas.append("  shutdown             | Desliga o sistema operacional")
-        respostas.append("  help                 | Exibe os comandos de ajuda")
-        respostas.append("  menu                 | Exibe o menu de opções do usuário")
-        respostas.append("  status [sistema]     | Exibe o status de um sistema (energia, servidor, etc.)")
-        respostas.append("  cd [diretorio]       | Muda para o diretório especificado")
-        respostas.append("  ls                   | Lista o conteúdo do diretório atual")
-        respostas.append("  view [arquivo]       | Exibe o conteúdo de um arquivo")
-        respostas.append("  exec [arquivo]       | Executa o conteúdo de um arquivo")
-        # REMOVIDO: respostas.append("  hack                 | Inicia o mini-game de hacking"),
-        respostas.append("  clear                | Limpa a tela do terminal")
+            respostas.append("   logout              | Sair da sessão atual")
+        respostas.append("   shutdown            | Desliga o sistema operacional")
+        respostas.append("   help                | Exibe os comandos de ajuda")
+        respostas.append("   menu                | Exibe o menu de opções do usuário")
+        respostas.append("   status [sistema]    | Exibe o status de um sistema (energia, servidor, etc.)")
+        respostas.append("   cd [diretorio]      | Muda para o diretório especificado")
+        respostas.append("   ls                  | Lista o conteúdo da pasta atual")
+        respostas.append("   view [arquivo]      | Exibe o conteúdo de um arquivo")
+        respostas.append("   exec [arquivo]      | Executa o conteúdo de um arquivo")
+        respostas.append("   clear               | Limpa a tela do terminal")
         respostas.append("")
         sugestao_som_tocar = "valid"
     elif comando_limpo == "MENU":
@@ -190,6 +187,7 @@ def processar_comando(comando, sistema_login_instance, sistema_arquivos_instance
             partes = comando_limpo.split(" ", 1)
             if len(partes) > 1:
                 nome_arquivo_alvo = partes[1].strip()
+                # A função view agora recebe sistema_login_instance
                 view_respostas, view_sugestao = sistema_arquivos_instance.view(nome_arquivo_alvo, sistema_login_instance)
                 respostas.extend(view_respostas)
                 if view_sugestao:

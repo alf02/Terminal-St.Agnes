@@ -6,8 +6,42 @@ import time
 # Importa as configurações
 import config
 
-def mostrar_tela_inicial(screen, fonts):
-    """Mostra a tela de boot inicial com o nome da empresa."""
+# --- Funções de Transição de Tela (NOVAS) ---
+
+def fade_out(screen, color, duration_ms):
+    """Esmaece a tela atual para uma cor sólida."""
+    fade_surface = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+    
+    for alpha in range(0, 256, 5): # Ajuste o passo (ex: 5) para suavidade
+        for event in pygame.event.get(): # Permite fechar a janela durante o fade
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+        
+        fade_surface.fill((*color, alpha)) # Cor com alpha
+        screen.blit(fade_surface, (0,0))
+        pygame.display.flip()
+        pygame.time.Clock().tick(60) # Controla o framerate do fade
+
+def fade_in(screen, color, duration_ms):
+    """Esmaece de uma cor sólida para a tela atual."""
+    fade_surface = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+    
+    for alpha in range(255, -1, -5): # Ajuste o passo para suavidade
+        for event in pygame.event.get(): # Permite fechar a janela durante o fade
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+        
+        fade_surface.fill((*color, alpha))
+        screen.blit(fade_surface, (0,0)) # Blit no frame anterior (que já está desenhado)
+        pygame.display.flip()
+        pygame.time.Clock().tick(60)
+
+# --- Funções de Tela ---
+
+def mostrar_tela_inicial(screen, fonts, main_text):
+    """Mostra a tela de boot inicial com o texto principal dinâmico."""
     tela_inicial_ativa = True
     while tela_inicial_ativa:
         screen.fill(config.COR_FUNDO)
@@ -26,10 +60,10 @@ def mostrar_tela_inicial(screen, fonts):
         texto_inferior = fonts['pequena'].render(mensagens_footer, True, config.COR_TEXTO)
         screen.blit(texto_inferior, (10, config.ALTURA_TELA - texto_inferior.get_height() - 10))
 
-        # "ST.AGNES BIOPHARMA INSTITUTE"
-        texto_principal = fonts['grande'].render("ST.AGNES BIOPHARMA INSTITUTE", True, config.COR_TEXTO)
-        lab_rect = texto_principal.get_rect(center=(config.LARGURA_TELA // 2, config.ALTURA_TELA // 2 - 50))
-        screen.blit(texto_principal, lab_rect)
+        # Texto principal da tela inicial
+        texto_principal = fonts['grande'].render(main_text, True, config.COR_TEXTO)
+        main_text_rect = texto_principal.get_rect(center=(config.LARGURA_TELA // 2, config.ALTURA_TELA // 2 - 50))
+        screen.blit(texto_principal, main_text_rect)
 
         # "pressione qualquer tecla para iniciar"
         if int(pygame.time.get_ticks() / config.INTERVALO_CURSOR_PISCAR) % 2 == 0:
@@ -61,7 +95,7 @@ def mostrar_tela_loading(screen, fonts, sounds):
     mensagens_loading_header = "LEAV -- DUSK % (C) 1987"
     mensagens_loading_footer = "Loading: user_info/password.txt::[File found]"
     
-    st_agnes_texto = "ST.AGNES BIOPHARMA INSTITUTE"
+    st_agnes_texto = "ST.AGNES BIOPHARMA INSTITUTE" 
     
     start_time = pygame.time.get_ticks()
     loading_duration = config.TEMPO_TELA_LOADING * 1000 # Convertendo para milissegundos
@@ -183,26 +217,25 @@ def draw_hack_restart_delay_screen(screen, fonts, hack_restart_delay_start_time,
     tempo_atraso_passado = (current_time_ticks - hack_restart_delay_start_time) / 1000
     tempo_atraso_restante = max(0, config.HACK_RESTART_DURATION_MS / 1000 - tempo_atraso_passado)
     
-    mensagem_atraso = f"Hack falhou. Reiniciando em\n{int(tempo_atraso_restante)} segundos..." # Alterado para 2 linhas
+    mensagem_atraso = f"Hack falhou. Reiniciando em\n{int(tempo_atraso_restante)} segundos..." 
     
     # Piscar a mensagem
     if int(tempo_atraso_passado * 5) % 2 == 0:
-        texto_atraso_render = fonts['grande'].render(mensagem_atraso, True, config.COR_ALARME_CLARO) # Laranja piscante
+        texto_atraso_render = fonts['grande'].render(mensagem_atraso, True, config.COR_ALARME_CLARO) 
     else:
         texto_atraso_render = fonts['grande'].render(mensagem_atraso, True, config.COR_TEXTO)
 
-    # NOVO: Dividir a mensagem em linhas e centralizar cada uma
+    # Dividir a mensagem em linhas e centralizar cada uma
     lines = mensagem_atraso.split('\n')
     line_height = fonts['grande'].get_linesize()
     total_text_height = len(lines) * line_height
     
-    # Calcular a posição Y inicial para centralizar o bloco de texto
     start_y_central = (config.ALTURA_TELA // 2) - (total_text_height // 2) 
 
     screen.fill(config.COR_FUNDO)
     
     for i, line in enumerate(lines):
-        rendered_line = fonts['grande'].render(line, True, texto_atraso_render.get_at((0,0))) # Usa a cor do texto_atraso_render (que pisca)
+        rendered_line = fonts['grande'].render(line, True, texto_atraso_render.get_at((0,0))) 
         line_rect = rendered_line.get_rect(center=(config.LARGURA_TELA // 2, start_y_central + i * line_height))
         screen.blit(rendered_line, line_rect)
 
@@ -237,7 +270,7 @@ def draw_purge_countdown_screen(screen, fonts, purge_tempo_inicio_ticks, protoco
             cronometro_cor = config.COR_TEXTO
         elif tempo_restante_segundos <= 60 and tempo_restante_segundos > 10: # Último minuto
             cronometro_cor = config.COR_ALARME_CLARO
-            mensagem_status_purga_base = "Fase critica:\nDetonacao iminente!"
+            mensagem_status_purga_base = "Fase critica:\nDetonacion iminente!"
         elif tempo_restante_segundos <= 10 and tempo_restante_segundos > 0: # Últimos 10 segundos (piscando)
             cronometro_cor = config.COR_ALARME_CRITICO
             if int(tempo_restante_segundos * 10) % 10 < 5:
@@ -250,26 +283,26 @@ def draw_purge_countdown_screen(screen, fonts, purge_tempo_inicio_ticks, protoco
     
     elif protocolo_atual_nome == "SERVER_DESTRUCT":
         if tempo_restante_segundos > config.PURGE_TEMPO_TOTAL_SEGUNDOS - 10:
-            mensagem_status_purga_base = "\nDestruicao de Servidor:\nValidando acesso de nivel Omega..."
+            mensagem_status_purga_base = "Destruicao de Servidor:\nValidando acesso de nivel Omega..."
             cronometro_cor = config.COR_TEXTO
         elif tempo_restante_segundos > config.PURGE_TEMPO_TOTAL_SEGUNDOS - 20:
-            mensagem_status_purga_base = "\nDestruicao de Servidor:\nIniciando sobrescrita de dados..."
+            mensagem_status_purga_base = "Destruicao de Servidor:\nIniciando sobrescrita de dados..."
             cronometro_cor = config.COR_TEXTO
         elif tempo_restante_segundos > 60: # Maior que 1 minuto
-            mensagem_status_purga_base = "\nProcesso de destruicao \nde servidor em andamento:\nIrreversivel..."
+            mensagem_status_purga_base = "Processo de destruicao de servidor em andamento:\nIrreversivel..."
             cronometro_cor = config.COR_TEXTO
         elif tempo_restante_segundos <= 60 and tempo_restante_segundos > 10:
             cronometro_cor = config.COR_ALARME_CLARO
-            mensagem_status_purga_base = "\nFase critica:\nServidores offline em breve!"
+            mensagem_status_purga_base = "Fase critica:\nServidores offline em breve!"
         elif tempo_restante_segundos <= 10 and tempo_restante_segundos > 0:
             cronometro_cor = config.COR_ALARME_CRITICO
             if int(tempo_restante_segundos * 10) % 10 < 5:
-                mensagem_status_purga_base = "\nALERTA:\nDADOS DO SERVIDOR PERDIDOS!"
+                mensagem_status_purga_base = "ALERTA:\nDADOS DO SERVIDOR PERDIDOS!"
             else:
                 mensagem_status_purga_base = ""
         elif tempo_restante_segundos <= 0:
             cronometro_cor = config.COR_ALARME_CRITICO
-            mensagem_status_purga_base = "\nSERVIDORES OFFLINE."
+            mensagem_status_purga_base = "SERVIDORES OFFLINE."
 
     screen.fill(config.COR_FUNDO)
 
