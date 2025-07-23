@@ -66,6 +66,14 @@ except pygame.error as e:
         if key not in sounds:
             sounds[key] = None 
 
+# Todas as variáveis globais que podem ser MODIFICADAS NESTE BLOCO de KEYDOWN.
+global comando_atual, estado_terminal, usuario_tentando_logar, \
+        historico_comandos, historico_indice, \
+        hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
+        hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, hacking_sequencias_ativas, \
+        purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, protocolo_atual_nome, \
+        shutdown_start_time, hack_initiated_by_backdoor, hack_restart_delay_start_time
+
 # Configurar tela
 screen = pygame.display.set_mode((config.LARGURA_TELA, config.ALTURA_TELA))
 pygame.display.set_caption("Terminal Pip-Boy (Fallout Inspired)")
@@ -101,13 +109,7 @@ def play_sound(sound_type):
         if pygame.mixer.music.get_busy(): # Para a música de fundo se estiver tocando (para outros sons pequenos)
             pygame.mixer.music.stop()
         sounds[sound_type].play()
-    # Todas as variáveis globais que podem ser MODIFICADAS NESTE BLOCO de KEYDOWN.
-    global comando_atual, estado_terminal, usuario_tentando_logar, \
-    historico_comandos, historico_indice, \
-    hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
-    hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, hacking_sequencias_ativas, \
-    purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, protocolo_atual_nome, \
-    shutdown_start_time, hack_initiated_by_backdoor, hack_restart_delay_start_time
+
 # --- LOOP PRINCIPAL DO PROGRAMA (ENGLOBANDO TUDO PARA REINICIALIZAÇÃO) ---
 while True: # Loop externo para reiniciar o terminal completamente
 

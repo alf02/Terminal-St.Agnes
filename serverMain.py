@@ -55,7 +55,8 @@ try:
     sounds['purge_alert'] = pygame.mixer.Sound(config.MUSICA_PURGE_ALERTA)
     sounds['purge_alert'].set_volume(0.5) 
     
-    # NOVO: O carregamento das músicas de server_destruct será dinâmico em play_sound
+    # NÃO CARREGAMOS TODAS as músicas de server_destruct aqui para otimização.
+    # Elas serão carregadas dinamicamente quando play_sound('server_destruct_alert_random') for chamado.
     
 except pygame.error as e:
     print(f"ATENÇÃO: Um ou mais sons não puderam ser carregados: {e}")
@@ -99,14 +100,16 @@ def play_sound(sound_type):
     elif sounds.get(sound_type): # Para todos os outros sons (boot_up, enter_key, etc.)
         if pygame.mixer.music.get_busy(): # Para a música de fundo se estiver tocando (para outros sons pequenos)
             pygame.mixer.music.stop()
-            sounds[sound_type].play()
+        sounds[sound_type].play()
+
 # Todas as variáveis globais que podem ser MODIFICADAS NESTE BLOCO de KEYDOWN.
 global comando_atual, estado_terminal, usuario_tentando_logar, \
-    historico_comandos, historico_indice, \
-    hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
-    hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, hacking_sequencias_ativas, \
-    purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, protocolo_atual_nome, \
-    shutdown_start_time, hack_initiated_by_backdoor, hack_restart_delay_start_time
+        historico_comandos, historico_indice, \
+        hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
+        hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, hacking_sequencias_ativas, \
+        purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, protocolo_atual_nome, \
+        shutdown_start_time, hack_initiated_by_backdoor, hack_restart_delay_start_time
+
 # --- LOOP PRINCIPAL DO PROGRAMA (ENGLOBANDO TUDO PARA REINICIALIZAÇÃO) ---
 while True: # Loop externo para reiniciar o terminal completamente
 
@@ -201,23 +204,24 @@ while True: # Loop externo para reiniciar o terminal completamente
                 # --- Processamento de Entrada de Usuário (Baseado no Estado do Terminal) ---
                 if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY"]:
                     if evento.key == pygame.K_RETURN:
-                        play_sound("enter_key") 
+                        play_sound("enter_key") # Som de ENTER
                         
                         # Processar o comando ou a senha
                         if estado_terminal == "AGUARDANDO_COMANDO":
-                            linha_digitada_no_historico = f"{sistema_arquivos.get_caminho_atual_exibicao()}{comando_atual}" 
-                            if comando_atual.strip() != "": 
+                            linha_digitada_no_historico = f"{sistema_arquivos.get_caminho_atual_exibicao()}{comando_atual}" # Adiciona o prompt ao histórico
+                            if comando_atual.strip() != "": # Apenas adiciona ao histórico se algo foi digitado
                                 historico_comandos.append(comando_atual.strip())
                                 historico_indice = -1 
                                 mensagens_historico.append(linha_digitada_no_historico)
                                 
                                 comando_a_processar = comando_atual.strip()
 
-                                if comando_a_processar.upper() == config.COMANDO_BACKDOOR: 
+                                if comando_a_processar.upper() == config.COMANDO_BACKDOOR: # Comando secreto
                                     sistema_login.usuario_logado = "admin"
                                     mensagens_historico.append("BACKDOOR ACCESS GRANTED.")
                                     mensagens_historico.append("ADMIN LOGIN INITIATED. Initiating bypass protocol...")
                                     
+                                    # Inicializa o hacking game para o backdoor
                                     dados_hacking = hacking_logic.initialize_hacking_game_data()
                                     hacking_game_ativo = True
                                     hacking_palavras_possiveis = dados_hacking['palavras']
@@ -225,7 +229,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                                     hacking_tentativas_restantes = dados_hacking['tentativas_restantes']
                                     hacking_likeness_ultima_tentativa = dados_hacking['likeness_ultima_tentativa']
                                     hacking_sequencias_ativas = dados_hacking['sequencias_ativas']
-                                    hack_initiated_by_backdoor = True 
+                                    hack_initiated_by_backdoor = True # Flag para indicar hack por backdoor
 
                                     mensagens_historico.append(f"Senhas possíveis (comprimento {len(hacking_senha_correta)}):")
                                     colunas = 3
@@ -235,25 +239,27 @@ while True: # Loop externo para reiniciar o terminal completamente
                                     mensagens_historico.append(f"\nTentativas restantes: {config.HACKING_MAX_TENTATIVAS}")
                                     
                                     estado_terminal = "HACKING"
-                                    comando_atual = "" 
+                                    comando_atual = "" # Limpa o comando do backdoor
                                     play_sound("valid_command")
                                     
-                                else: 
+                                else: # Processa comandos normais
+                                    # processar_comando retorna sugestão de estado e dados extras
                                     respostas_do_comando, sugestao_proximo_estado, dados_proximo_estado, sugestao_som_tocar = \
                                         menus_commands.processar_comando(comando_a_processar, sistema_login, sistema_arquivos, play_sound)
                                     
                                     mensagens_historico.extend(respostas_do_comando)
                                     play_sound(sugestao_som_tocar)
 
+                                    # Aplica sugestão de mudança de estado
                                     if sugestao_proximo_estado == "HACKING":
-                                        dados_hacking = hacking_logic.initialize_hacking_game_data() 
+                                        dados_hacking = hacking_logic.initialize_hacking_game_data() # Inicializa dados do hack
                                         hacking_game_ativo = True
                                         hacking_palavras_possiveis = dados_hacking['palavras']
                                         hacking_senha_correta = dados_hacking['senha_correta']
                                         hacking_tentativas_restantes = dados_hacking['tentativas_restantes']
                                         hacking_likeness_ultima_tentativa = dados_hacking['likeness_ultima_tentativa']
                                         hacking_sequencias_ativas = dados_hacking['sequencias_ativas']
-                                        hack_initiated_by_backdoor = False 
+                                        hack_initiated_by_backdoor = False # Hack normal
                                         estado_terminal = "HACKING"
                                         mensagens_historico.append(f"Senhas possíveis (comprimento {len(hacking_senha_correta)}):")
                                         colunas = 3
@@ -266,6 +272,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                                         estado_terminal = "AGUARDANDO_SENHA"
                                         usuario_tentando_logar = dados_proximo_estado
                                     elif sugestao_proximo_estado == "CLEAR_SCREEN":
+                                        # Recarrega as mensagens iniciais para limpar a tela
                                         mensagens_historico = menus_commands.get_menu_inicial_mensagens()
                                         respostas_menu_inicial, _, _, _ = menus_commands.processar_comando("HELP", sistema_login, sistema_arquivos, play_sound) 
                                         mensagens_historico.extend(respostas_menu_inicial)
@@ -469,7 +476,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                 hacking_senha_correta = dados_hacking['senha_correta']
                 hacking_tentativas_restantes = dados_hacking['tentativas_restantes']
                 hacking_likeness_ultima_tentativa = dados_hacking['likeness_ultima_tentativa']
-                hacking_sequencias_ativas = dados_hacking['sequencias_ativas']
+                hacking_sequencias_ativas = dados_hacking['sequencias_actives'] # Typo: hacking_sequencias_actives -> hacking_sequencias_ativas
                 hack_initiated_by_backdoor = True 
 
                 mensagens_historico.append("Reiniciando hacking...")
