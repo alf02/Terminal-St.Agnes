@@ -6,40 +6,6 @@ import time
 # Importa as configurações
 import config
 
-# --- Funções de Transição de Tela (NOVAS) ---
-
-def fade_out(screen, color, duration_ms):
-    """Esmaece a tela atual para uma cor sólida."""
-    fade_surface = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
-    
-    for alpha in range(0, 256, 5): # Ajuste o passo (ex: 5) para suavidade
-        for event in pygame.event.get(): # Permite fechar a janela durante o fade
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-        
-        fade_surface.fill((*color, alpha)) # Cor com alpha
-        screen.blit(fade_surface, (0,0))
-        pygame.display.flip()
-        pygame.time.Clock().tick(60) # Controla o framerate do fade
-
-def fade_in(screen, color, duration_ms):
-    """Esmaece de uma cor sólida para a tela atual."""
-    fade_surface = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
-    
-    for alpha in range(255, -1, -5): # Ajuste o passo para suavidade
-        for event in pygame.event.get(): # Permite fechar a janela durante o fade
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-        
-        fade_surface.fill((*color, alpha))
-        screen.blit(fade_surface, (0,0)) # Blit no frame anterior (que já está desenhado)
-        pygame.display.flip()
-        pygame.time.Clock().tick(60)
-
-# --- Funções de Tela ---
-
 def mostrar_tela_inicial(screen, fonts, main_text):
     """Mostra a tela de boot inicial com o texto principal dinâmico."""
     tela_inicial_ativa = True
@@ -60,10 +26,11 @@ def mostrar_tela_inicial(screen, fonts, main_text):
         texto_inferior = fonts['pequena'].render(mensagens_footer, True, config.COR_TEXTO)
         screen.blit(texto_inferior, (10, config.ALTURA_TELA - texto_inferior.get_height() - 10))
 
-        # Texto principal da tela inicial
+        # --- ALTERADO AQUI: Posição Y do texto principal da tela inicial ---
         texto_principal = fonts['grande'].render(main_text, True, config.COR_TEXTO)
-        main_text_rect = texto_principal.get_rect(center=(config.LARGURA_TELA // 2, config.ALTURA_TELA // 2 - 50))
-        screen.blit(texto_principal, main_text_rect)
+        # Ajustado para ALTURA_TELA // 4, a mesma posição que na tela de loading
+        lab_rect = texto_principal.get_rect(center=(config.LARGURA_TELA // 2, config.ALTURA_TELA // 4)) 
+        screen.blit(texto_principal, lab_rect)
 
         # "pressione qualquer tecla para iniciar"
         if int(pygame.time.get_ticks() / config.INTERVALO_CURSOR_PISCAR) % 2 == 0:
@@ -86,24 +53,31 @@ def mostrar_tela_inicial(screen, fonts, main_text):
                 tela_inicial_ativa = False # Sai da tela inicial ao pressionar qualquer tecla
 
 def mostrar_tela_loading(screen, fonts, sounds):
-    """Exibe a tela de carregamento com a mensagem da empresa e 'LOADING...' piscando."""
+    """Exibe a tela de carregamento com o nome da empresa e mensagens de loading piscando."""
     sounds['boot_up'].play()
 
     tempo_inicio = pygame.time.get_ticks()
-    tempo_total_loading = 3000
+    tempo_total_loading = 3000 # Duração total da tela de loading
     
     mensagens_loading_header = "LEAV -- DUSK % (C) 1987"
     mensagens_loading_footer = "Loading: user_info/password.txt::[File found]"
     
-    st_agnes_texto = "ST.AGNES BIOPHARMA INSTITUTE" 
+    st_agnes_texto = "ST.AGNES BIOPHARMA INSTITUTE" # Nome da empresa (fixo nesta tela)
     
-    start_time = pygame.time.get_ticks()
-    loading_duration = config.TEMPO_TELA_LOADING * 1000 # Convertendo para milissegundos
-    
-    show_loading_text = True
-    last_blink_time = start_time
+    # NOVAS MENSAGENS DE LOADING
+    # Variáveis para o ciclo de mensagens do loading (aqui são locais da função)
+    loading_messages = [
+        "LOADING...",
+        "LOADING EXPLOSIVES...",
+        "LOADING ANTENAS...",
+        "LOADING CRAZY S**T...",
+    ]
+    current_message_index = 0
+    last_message_change_time = tempo_inicio # Usa tempo_inicio como o start
+    message_state = "BLINKING" # "BLINKING" ou "FIXED"
+    messages_fixed_on_screen = [] # Armazena as mensagens que já foram fixadas
 
-    while pygame.time.get_ticks() - start_time < loading_duration:
+    while pygame.time.get_ticks() - tempo_inicio < tempo_total_loading:
         screen.fill(config.COR_FUNDO)
         
         # Desenha a borda e as linhas de topo/base
@@ -111,25 +85,47 @@ def mostrar_tela_loading(screen, fonts, sounds):
         pygame.draw.line(screen, config.COR_TEXTO, (5, 30), (config.LARGURA_TELA - 5, 30), 2)
         pygame.draw.line(screen, config.COR_TEXTO, (5, config.ALTURA_TELA - 30), (config.LARGURA_TELA - 5, config.ALTURA_TELA - 30), 2)
 
-        # Mensagem da empresa (fixa, com fonte 'grande')
+        # Mensagem da empresa (agora pisca)
+        current_time = pygame.time.get_ticks()
+        if current_time - last_message_change_time > config.INTERVALO_CURSOR_PISCAR: # Reutiliza a lógica de piscar
+            # show_loading_text = not show_loading_text # Esta variável foi removida
+            pass # A lógica de piscar agora é interna para cada mensagem no ciclo abaixo
+
+        # Nome da empresa (permanece estático e visível)
         render_empresa = fonts['grande'].render(st_agnes_texto, True, config.COR_TEXTO)
         x_empresa = (config.LARGURA_TELA - render_empresa.get_width()) // 2
-        y_empresa = config.ALTURA_TELA // 4 # Posição mais acima
+        y_empresa = config.ALTURA_TELA // 4 # Posição mais acima (igual a tela inicial)
         screen.blit(render_empresa, (x_empresa, y_empresa))
 
-        current_time = pygame.time.get_ticks()
-        if current_time - last_blink_time > config.INTERVALO_CURSOR_PISCAR:
-            show_loading_text = not show_loading_text
-            last_blink_time = current_time
 
-        if show_loading_text:
-            texto_loading = "LOADING..."
-            render_loading = fonts['normal'].render(texto_loading, True, config.COR_TEXTO)
-            x_loading = (config.LARGURA_TELA - render_loading.get_width()) // 2
-            y_loading = y_empresa + render_empresa.get_height() + 50 
-            screen.blit(render_loading, (x_loading, y_loading))
+        # Lógica para ciclar as mensagens de loading
+        # Gerencia a transição de mensagens e estado de piscar/fixar
+        if current_time - last_message_change_time > config.AD_MESSAGE_BLINK_DURATION_MS + config.AD_PAUSE_BETWEEN_MESSAGES_MS:
+            # Se a mensagem atual já foi processada (piscou e fixou)
+            if current_message_index < len(loading_messages): # Se ainda há mensagens a serem processadas
+                messages_fixed_on_screen.append(loading_messages[current_message_index]) # Fixa a mensagem atual
+                current_message_index += 1 # Avança para a próxima
+                last_message_change_time = current_time # Reseta o tempo para a próxima transição
 
-        # Cabeçalho e Rodapé copiados da tela de loading (sem piscar aqui)
+        # Renderiza as mensagens já fixadas (do y_empresa para baixo)
+        y_offset_loading_msgs = y_empresa + render_empresa.get_height() + 50 # Posição inicial abaixo do nome da empresa
+        for i, msg in enumerate(messages_fixed_on_screen):
+            rendered_msg = fonts['normal'].render(msg, True, config.COR_TEXTO)
+            msg_rect = rendered_msg.get_rect(center=(config.LARGURA_TELA // 2, y_offset_loading_msgs + i * fonts['normal'].get_linesize()))
+            screen.blit(rendered_msg, msg_rect)
+
+        # Renderiza a mensagem atual (se ainda houver e no estado BLINKING)
+        if current_message_index < len(loading_messages):
+            current_loading_message_text = loading_messages[current_message_index]
+            
+            # Pisca a mensagem atual
+            if int(current_time / config.INTERVALO_CURSOR_PISCAR) % 2 == 0:
+                render_current_loading = fonts['normal'].render(current_loading_message_text, True, config.COR_TEXTO)
+                current_loading_rect = render_current_loading.get_rect(center=(config.LARGURA_TELA // 2, y_offset_loading_msgs + len(messages_fixed_on_screen) * fonts['normal'].get_linesize()))
+                screen.blit(render_current_loading, current_loading_rect)
+
+
+        # Cabeçalho e Rodapé (fixos, não piscam)
         texto_superior = fonts['pequena'].render(mensagens_loading_header, True, config.COR_TEXTO)
         screen.blit(texto_superior, (config.LARGURA_TELA - texto_superior.get_width() - 10, 10))
         texto_inferior = fonts['pequena'].render(mensagens_loading_footer, True, config.COR_TEXTO)
@@ -279,7 +275,7 @@ def draw_purge_countdown_screen(screen, fonts, purge_tempo_inicio_ticks, protoco
                 mensagem_status_purga_base = ""
         elif tempo_restante_segundos <= 0:
             cronometro_cor = config.COR_ALARME_CRITICO
-            mensagem_status_purga_base = "DETONACAO."
+            mensagem_status_purga_base = "DETONACION."
     
     elif protocolo_atual_nome == "SERVER_DESTRUCT":
         if tempo_restante_segundos > config.PURGE_TEMPO_TOTAL_SEGUNDOS - 10:

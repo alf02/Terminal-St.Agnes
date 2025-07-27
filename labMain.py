@@ -54,6 +54,10 @@ try:
     
     sounds['purge_alert'] = pygame.mixer.Sound(config.MUSICA_PURGE_ALERTA)
     sounds['purge_alert'].set_volume(0.5) 
+
+    sounds['typing_sound'] = pygame.mixer.Sound(config.SOM_DIGITACAO)
+    sounds['typing_sound'].set_volume(0.1) # Ajuste o volume para ser sutil
+    
     
     # NÃO CARREGAMOS TODAS as músicas de server_destruct aqui para otimização.
     # Elas serão carregadas dinamicamente quando play_sound('server_destruct_alert_random') for chamado.
@@ -62,9 +66,13 @@ except pygame.error as e:
     print(f"ATENÇÃO: Um ou mais sons não puderam ser carregados: {e}")
     print(f"Verifique se os arquivos de som existem na pasta '{os.path.abspath('sons')}'")
     # Define sons como None para evitar erros se não carregados
-    for key in ['boot_up', 'enter_key', 'valid_command', 'invalid_command', 'login_success', 'login_fail', 'shutdown', 'purge_alert']:
+    for key in ['boot_up', 'enter_key', 'valid_command', 'invalid_command', 'login_success', 'login_fail', 'shutdown', 'purge_alert', 'typing_sound']:
         if key not in sounds:
             sounds[key] = None 
+
+# Configurar tela
+screen = pygame.display.set_mode((config.LARGURA_TELA, config.ALTURA_TELA), pygame.NOFRAME)
+pygame.display.set_caption("Terminal Pip-Boy (Fallout Inspired)")
 
 # Todas as variáveis globais que podem ser MODIFICADAS NESTE BLOCO de KEYDOWN.
 global comando_atual, estado_terminal, usuario_tentando_logar, \
@@ -72,11 +80,8 @@ global comando_atual, estado_terminal, usuario_tentando_logar, \
         hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
         hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, hacking_sequencias_ativas, \
         purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, protocolo_atual_nome, \
-        shutdown_start_time, hack_initiated_by_backdoor, hack_restart_delay_start_time
-
-# Configurar tela
-screen = pygame.display.set_mode((config.LARGURA_TELA, config.ALTURA_TELA))
-pygame.display.set_caption("Terminal Pip-Boy (Fallout Inspired)")
+        shutdown_start_time, hack_initiated_by_backdoor, hack_restart_delay_start_time, \
+        ad_loading_start_time, ad_current_message_index, ad_last_message_change_time, ad_message_state, ad_messages_fixed_on_screen 
 
 # Funções auxiliares para tocar sons (usadas como callback para evitar dependências circulares)
 def play_sound(sound_type):
@@ -106,8 +111,6 @@ def play_sound(sound_type):
         else:
             print("AVISO: Música de purge_alert não carregada para tocar.")
     elif sounds.get(sound_type): # Para todos os outros sons (boot_up, enter_key, etc.)
-        if pygame.mixer.music.get_busy(): # Para a música de fundo se estiver tocando (para outros sons pequenos)
-            pygame.mixer.music.stop()
         sounds[sound_type].play()
 
 # --- LOOP PRINCIPAL DO PROGRAMA (ENGLOBANDO TUDO PARA REINICIALIZAÇÃO) ---
@@ -145,14 +148,31 @@ while True: # Loop externo para reiniciar o terminal completamente
     # Variáveis de Desligamento
     shutdown_start_time = 0 
 
+     # Variável para o tempo de início do loading do anúncio (já existia)
+    ad_loading_start_time = 0 
+
+    # NOVAS: Variáveis para o ciclo de mensagens do loading do anúncio
+    ad_loading_messages = [
+        "LOADING MILSIM...",
+        "LOADING EXPLOSIVES...",
+        "LOADING ANTENAS...",
+        "LOADING CRAZY S**T...",
+    ]
+    ad_current_message_index = 0
+    ad_last_message_change_time = 0 # Tempo da última mudança de mensagem
+    ad_message_state = "BLINKING" # "BLINKING" ou "FIXED"
+    ad_messages_fixed_on_screen = [] # Armazena as mensagens que já foram fixadas
+
+    # 'displaying_nakatomi_ad' foi removido, agora o estado é controlado diretamente por 'estado_terminal'
+
     # Re-instanciar sistemas para garantir estado limpo
     sistema_login = systems.SistemaLogin()
     sistema_arquivos = systems.SistemaArquivos() 
 
     # --- Mensagens iniciais do histórico para LAB MAIN (ST.AGNES) ---
     mensagens_historico = [
-        "ST.AGNES BIOPHARMA INSTITUTE - TERMINAL INTERFACE V2.0",
-        "COPYRIGHT (C) 2077 UMBRELLA CORP. ALL RIGHTS RESERVED.",
+        "ST.AGNES BIOPHARMA INSTITUTE - TERMINAL INTERFACE V2.0", 
+        "COPYRIGHT (C) 2077 UMBRELLA CORP. ALL RIGHTS RESERVED.", 
         "", # Espaço entre o cabeçalho e as instruções
     ]
     # Adiciona as mensagens de HELP e LOGON da função menus_commands
@@ -160,7 +180,7 @@ while True: # Loop externo para reiniciar o terminal completamente
     mensagens_historico.append("") # Adiciona uma linha em branco final para espaçamento
 
     # --- Chamada das Telas Iniciais ---
-    screens.mostrar_tela_inicial(screen, fonts, "ST.AGNES BIOPHARMA INSTITUTE") # Título específico do Laboratório
+    screens.mostrar_tela_inicial(screen, fonts, "ST.AGNES BIOPHARMA INSTITUTE") 
     screens.mostrar_tela_loading(screen, fonts, sounds)
 
     # CRÍTICO: Limpar a fila de eventos APÓS as telas iniciais
@@ -173,7 +193,7 @@ while True: # Loop externo para reiniciar o terminal completamente
     rodando = True # Flag para o loop interno do jogo (sessão atual do terminal)
 
     while rodando:
-        tempo_frame = pygame.time.get_ticks()
+        tempo_frame = pygame.time.get_ticks() # tempo_frame é o current_time_ticks para renderização
 
         # --- Lógica de ativação do Glitch ---
         if not glitch_ativo:
@@ -189,25 +209,40 @@ while True: # Loop externo para reiniciar o terminal completamente
         for evento in pygame.event.get():
             # Processamento de eventos globais (QUIT, ESCAPE)
             if evento.type == pygame.QUIT:
-                rodando = False # Sai do loop interno
-            elif evento.type == pygame.K_ESCAPE: # Atalho para sair (ESC)
+                rodando = False 
+            elif evento.type == pygame.K_ESCAPE: 
                 if estado_terminal in ["DESLIGANDO", "TERMINAL_BLOQUEADO"]:
-                    rodando = False # Sai do loop interno
+                    rodando = False 
                 else:
-                    rodando = False # Sai do loop interno
-            elif evento.type == pygame.K_LEFT and pygame.key.get_mods() & pygame.KMOD_ALT: # Alt+Left para sair
+                    rodando = False 
+            elif evento.type == pygame.K_LEFT and pygame.key.get_mods() & pygame.KMOD_ALT: 
                 rodando = False
-            elif evento.type == pygame.K_RIGHT and pygame.key.get_mods() & pygame.KMOD_ALT: # Alt+Right para sair
+            elif evento.type == pygame.K_RIGHT and pygame.key.get_mods() & pygame.KMOD_ALT: 
                 rodando = False
-            elif evento.type == pygame.KEYDOWN:
+            elif evento.type == pygame.KEYDOWN: 
+                # --- Lógica para sair de estados especiais ao pressionar qualquer tecla ---
+                if estado_terminal == "DISPLAY_NAKATOMI_AD": # Sai do anúncio
+                    estado_terminal = "AGUARDANDO_COMANDO" # Retorna ao terminal normal
+                    pygame.event.clear() # Limpa a fila de eventos para evitar inputs indesejados
+                    break 
+                
+                # Se está na tela de loading do anúncio, qualquer tecla volta mais rápido
+                elif estado_terminal == "DISPLAY_NAKATOMI_AD_LOADING":
+                    # Pula o loading e vai direto para o anúncio (agora para todas as mensagens fixas)
+                    ad_messages_fixed_on_screen = list(ad_loading_messages) # Fixa todas as mensagens de uma vez
+                    estado_terminal = "DISPLAY_NAKATOMI_AD" 
+                    pygame.event.clear()
+                    break
+
+
                 # --- Processamento de Entrada de Usuário (Baseado no Estado do Terminal) ---
-                if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY"]:
+                if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY", "DISPLAY_NAKATOMI_AD_LOADING"]: 
                     if evento.key == pygame.K_RETURN:
-                        play_sound("enter_key") # Som de ENTER
+                        play_sound("enter_key") 
                         
                         # Processar o comando ou a senha
                         if estado_terminal == "AGUARDANDO_COMANDO":
-                            linha_digitada_no_historico = f"{sistema_arquivos.get_caminho_atual_exibicao()}{comando_atual}" # Adiciona o prompt ao histórico
+                            linha_digitada_no_historico = f"{sistema_arquivos.get_caminho_atual_exibicao()}{comando_atual}" 
                             if comando_atual.strip() != "": # Apenas adiciona ao histórico se algo foi digitado
                                 historico_comandos.append(comando_atual.strip())
                                 historico_indice = -1 
@@ -215,12 +250,11 @@ while True: # Loop externo para reiniciar o terminal completamente
                                 
                                 comando_a_processar = comando_atual.strip()
 
-                                if comando_a_processar.upper() == config.COMANDO_BACKDOOR: # Comando secreto
+                                if comando_a_processar.upper() == config.COMANDO_BACKDOOR: 
                                     sistema_login.usuario_logado = "admin"
                                     mensagens_historico.append("BACKDOOR ACCESS GRANTED.")
                                     mensagens_historico.append("ADMIN LOGIN INITIATED. Initiating bypass protocol...")
                                     
-                                    # Inicializa o hacking game para o backdoor
                                     dados_hacking = hacking_logic.initialize_hacking_game_data()
                                     hacking_game_ativo = True
                                     hacking_palavras_possiveis = dados_hacking['palavras']
@@ -228,7 +262,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                                     hacking_tentativas_restantes = dados_hacking['tentativas_restantes']
                                     hacking_likeness_ultima_tentativa = dados_hacking['likeness_ultima_tentativa']
                                     hacking_sequencias_ativas = dados_hacking['sequencias_ativas']
-                                    hack_initiated_by_backdoor = True # Flag para indicar hack por backdoor
+                                    hack_initiated_by_backdoor = True 
 
                                     mensagens_historico.append(f"Senhas possíveis (comprimento {len(hacking_senha_correta)}):")
                                     colunas = 3
@@ -238,27 +272,25 @@ while True: # Loop externo para reiniciar o terminal completamente
                                     mensagens_historico.append(f"\nTentativas restantes: {config.HACKING_MAX_TENTATIVAS}")
                                     
                                     estado_terminal = "HACKING"
-                                    comando_atual = "" # Limpa o comando do backdoor
+                                    comando_atual = "" 
                                     play_sound("valid_command")
                                     
-                                else: # Processa comandos normais
-                                    # processar_comando retorna sugestão de estado e dados extras
+                                else: 
                                     respostas_do_comando, sugestao_proximo_estado, dados_proximo_estado, sugestao_som_tocar = \
                                         menus_commands.processar_comando(comando_a_processar, sistema_login, sistema_arquivos, play_sound)
                                     
                                     mensagens_historico.extend(respostas_do_comando)
                                     play_sound(sugestao_som_tocar)
 
-                                    # Aplica sugestão de mudança de estado
                                     if sugestao_proximo_estado == "HACKING":
-                                        dados_hacking = hacking_logic.initialize_hacking_game_data() # Inicializa dados do hack
+                                        dados_hacking = hacking_logic.initialize_hacking_game_data() 
                                         hacking_game_ativo = True
                                         hacking_palavras_possiveis = dados_hacking['palavras']
                                         hacking_senha_correta = dados_hacking['senha_correta']
                                         hacking_tentativas_restantes = dados_hacking['tentativas_restantes']
                                         hacking_likeness_ultima_tentativa = dados_hacking['likeness_ultima_tentativa']
                                         hacking_sequencias_ativas = dados_hacking['sequencias_ativas']
-                                        hack_initiated_by_backdoor = False # Hack normal
+                                        hack_initiated_by_backdoor = False 
                                         estado_terminal = "HACKING"
                                         mensagens_historico.append(f"Senhas possíveis (comprimento {len(hacking_senha_correta)}):")
                                         colunas = 3
@@ -271,7 +303,6 @@ while True: # Loop externo para reiniciar o terminal completamente
                                         estado_terminal = "AGUARDANDO_SENHA"
                                         usuario_tentando_logar = dados_proximo_estado
                                     elif sugestao_proximo_estado == "CLEAR_SCREEN":
-                                        # Recarrega as mensagens iniciais para limpar a tela
                                         mensagens_historico = menus_commands.get_menu_inicial_mensagens()
                                         respostas_menu_inicial, _, _, _ = menus_commands.processar_comando("HELP", sistema_login, sistema_arquivos, play_sound) 
                                         mensagens_historico.extend(respostas_menu_inicial)
@@ -296,7 +327,14 @@ while True: # Loop externo para reiniciar o terminal completamente
                                         play_sound("server_destruct_alert_random") 
                                         luz_api.ligar_piscar_vermelho() 
                                         estado_terminal = "PURGE_CONTADOR"
-                                    
+                                    elif sugestao_proximo_estado == "DISPLAY_NAKATOMI_AD": 
+                                        estado_terminal = "DISPLAY_NAKATOMI_AD_LOADING" 
+                                        ad_loading_start_time = pygame.time.get_ticks()                                         
+                                        ad_current_message_index = 0
+                                        ad_last_message_change_time = pygame.time.get_ticks()
+                                        ad_message_state = "BLINKING"
+                                        ad_messages_fixed_on_screen = []
+                                        
                                     comando_atual = "" 
                             
                             else: 
@@ -321,7 +359,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                                     mensagens_historico.extend(menus_commands.get_menu_cientista_chefe())
                                 elif sistema_login.usuario_logado == "tech":
                                     mensagens_historico.extend(menus_commands.get_menu_tech())
-                                else: # Cientista padrão
+                                else: 
                                     mensagens_historico.extend(menus_commands.get_menu_cientista())
 
                             else:
@@ -355,9 +393,9 @@ while True: # Loop externo para reiniciar o terminal completamente
                                         mensagens_historico.append("Nenhuma palavra 'dud' para remover. Tentativas +1.")
                                         hacking_tentativas_restantes += 1
                                         mensagens_historico.append(f"Tentativas restantes: {hacking_tentativas_restantes}")
-                            elif efeito == "attempt":
-                                hacking_tentativas_restantes += 1
-                                mensagens_historico.append(f"Tentativa adicional concedida. Tentativas restantes: {hacking_tentativas_restantes}")
+                                elif efeito == "attempt":
+                                    hacking_tentativas_restantes += 1
+                                    mensagens_historico.append(f"Tentativa adicional concedida. Tentativas restantes: {hacking_tentativas_restantes}")
                             
                                 if palpite in hacking_palavras_possiveis: 
                                     hacking_palavras_possiveis.remove(palpite)
@@ -429,9 +467,10 @@ while True: # Loop externo para reiniciar o terminal completamente
                         if evento.unicode and evento.unicode.isprintable():
                             if estado_terminal == "AGUARDANDO_SENHA":
                                 comando_atual += evento.unicode
+                                play_sound('typing_sound') 
                             elif estado_terminal == "AGUARDANDO_COMANDO" or estado_terminal == "HACKING":
                                 comando_atual += evento.unicode
-                                historico_indice = -1
+                                play_sound('typing_sound') 
 
 
         # --- Renderização da Tela Baseada no Estado ---
@@ -490,18 +529,107 @@ while True: # Loop externo para reiniciar o terminal completamente
                 comando_atual = ""
                 play_sound("valid_command")
                 
-        else: 
+        elif estado_terminal == "DISPLAY_NAKATOMI_AD_LOADING": # ESTADO DE RENDERIZAÇÃO PARA O ANÚNCIO LOADING
+            current_time_ticks = pygame.time.get_ticks()
+
+            messages_interval_ms = 1500 # Cada mensagem dura 1.5 segundos
+
+            # Gerencia a transição de mensagens e estado de piscar/fixar
+            if current_time_ticks - ad_last_message_change_time > messages_interval_ms:
+                if ad_current_message_index < len(ad_loading_messages): 
+                    if ad_message_state == "BLINKING": # Se estava piscando, agora fixa
+                        ad_messages_fixed_on_screen.append(ad_loading_messages[ad_current_message_index])
+                        ad_message_state = "FIXED"
+                        ad_last_message_change_time = current_time_ticks
+                    elif ad_message_state == "FIXED": # Se estava fixa, avança para a próxima ou termina
+                        ad_current_message_index += 1
+                        if ad_current_message_index < len(ad_loading_messages): # Se há próxima, volta a piscar
+                            ad_message_state = "BLINKING"
+                            ad_last_message_change_time = current_time_ticks
+                        else: # Todas as mensagens foram exibidas e fixadas
+                            estado_terminal = "DISPLAY_NAKATOMI_AD" 
+                            pygame.event.clear() 
+                            
+            screen.fill(config.COR_FUNDO)
+            
+            # Renderiza as mensagens já fixadas
+            y_offset_ad_loading = config.ALTURA_TELA // 2 - (len(ad_messages_fixed_on_screen) * fonts['media'].get_linesize() // 2) 
+            for i, msg in enumerate(ad_messages_fixed_on_screen):
+                rendered_msg = fonts['media'].render(msg, True, config.COR_TEXTO)
+                msg_rect = rendered_msg.get_rect(center=(config.LARGURA_TELA // 2, y_offset_ad_loading + i * fonts['media'].get_linesize()))
+                screen.blit(rendered_msg, msg_rect)
+
+            # Renderiza a mensagem atual (se ainda houver)
+            if ad_current_message_index < len(ad_loading_messages):
+                current_ad_message_text = ad_loading_messages[ad_current_message_index]
+                
+                # --- CORREÇÃO AQUI para o piscar/fixar e não duplicar ---
+                # Renderiza SOMENTE se a mensagem atual estiver no estado BLINKING E visível no ciclo de piscar
+                if ad_message_state == "BLINKING" and int(current_time_ticks / config.INTERVALO_CURSOR_PISCAR) % 2 == 0:
+                    render_current_loading = fonts['media'].render(current_ad_message_text, True, config.COR_TEXTO) 
+                    loading_rect = render_current_loading.get_rect(center=(config.LARGURA_TELA // 2, y_offset_ad_loading + len(ad_messages_fixed_on_screen) * fonts['media'].get_linesize()))
+                    screen.blit(render_current_loading, loading_rect)
+
+
+            # Scanlines e flip
+            for y in range(0, config.ALTURA_TELA, 3):
+                pygame.draw.line(screen, config.COR_SCANLINE, (0, y), (config.LARGURA_TELA, y)) 
+            pygame.display.flip()
+            pygame.time.Clock().tick(60)
+
+        elif estado_terminal == "DISPLAY_NAKATOMI_AD": # ESTADO DE RENDERIZAÇÃO PARA O ANÚNCIO
+            # Renderização do anúncio Nakatomi 5
+            screen.fill(config.COR_FUNDO)
+            
+            # Título: NAKATOMI 5
+            text_nakatomi = fonts['cronometro'].render("NAKATOMI 5", True, config.COR_TEXTO)
+            nakatomi_rect = text_nakatomi.get_rect(center=(config.LARGURA_TELA // 2, config.ALTURA_TELA // 2 - 150))
+            screen.blit(text_nakatomi, nakatomi_rect)
+
+            # Subtítulo 1: DISTRITO 47 INDOOR
+            text_st_agnes = fonts['media'].render("DISTRITO 47 INDOOR", True, config.COR_TEXTO) 
+            # Espaçamento de 40 pixels entre o título e o subtítulo
+            st_agnes_rect = text_st_agnes.get_rect(center=(config.LARGURA_TELA // 2, nakatomi_rect.bottom + 60)) 
+            screen.blit(text_st_agnes, st_agnes_rect)
+
+            # Subtítulo 2: Data e Local
+            text_date_location = fonts['media'].render("27.09.25 - B. CAMBORIU/SC", True, config.COR_TEXTO) 
+            # Espaçamento de 20 pixels entre o subtítulo 1 e o subtítulo 2
+            date_location_rect = text_date_location.get_rect(center=(config.LARGURA_TELA // 2, st_agnes_rect.bottom + 40)) 
+            screen.blit(text_date_location, date_location_rect)
+
+            # Chamada para Ação (AGORA PISCA)
+            if int(tempo_frame / config.INTERVALO_CURSOR_PISCAR) % 2 == 0: # Aplicar lógica de piscar aqui
+                text_cta = fonts['grande'].render("INSCREVA-SE AGORA", True, config.COR_TEXTO) 
+                # Espaçamento de 40 pixels entre a data/local e o CTA
+                cta_rect = text_cta.get_rect(center=(config.LARGURA_TELA // 2, date_location_rect.bottom + 100))
+                screen.blit(text_cta, cta_rect)
+            
+            # "Pressione qualquer tecla para continuar" (REMOVIDO)
+            
+            # Scanlines e flip são comuns a todas as telas
+            for y in range(0, config.ALTURA_TELA, 3):
+                pygame.draw.line(screen, config.COR_SCANLINE, (0, y), (config.LARGURA_TELA, y)) 
+            pygame.display.flip()
+            pygame.time.Clock().tick(60)
+
+        else: # Renderização normal do terminal (AGUARDANDO_COMANDO, HACKING ativo com digitação)
+            # Calcula o y_offset para o prompt fixo na parte inferior
             prompt_y_offset = config.ALTURA_TELA - (config.TAMANHO_FONTE + 10) 
             
+            # Define a margem superior para o histórico
             top_margin_history = 10 
 
+            # Calcula o número máximo de linhas do histórico que cabem entre a margem superior e o prompt
             max_linhas_visiveis_acima_prompt = int((prompt_y_offset - top_margin_history) / (config.TAMANHO_FONTE + 2)) 
 
+            # Renderiza as mensagens do histórico, começando da margem superior
             for i, linha in enumerate(mensagens_historico[-max_linhas_visiveis_acima_prompt:]):
                 texto_renderizado = fonts['normal'].render(linha, True, config.COR_TEXTO)
                 screen.blit(texto_renderizado, (10, top_margin_history + i * (config.TAMANHO_FONTE + 2)))
 
 
+            # --- Renderiza o prompt e o comando atual ---
             prompt_texto = "> "
             if estado_terminal == "AGUARDANDO_SENHA":
                 prompt_texto = "Password: "
@@ -514,6 +642,7 @@ while True: # Loop externo para reiniciar o terminal completamente
 
             screen.blit(texto_renderizado_comando, (10, prompt_y_offset))
 
+            # Lógica para o cursor piscando na linha de comando atual
             tempo_atual = pygame.time.get_ticks()
             if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY"] and mostrar_cursor:
                 cursor_pos_x = 10 + texto_renderizado_comando.get_width()

@@ -1,8 +1,8 @@
 import os
 
 # --- Configurações do Terminal ---
-LARGURA_TELA = 800
-ALTURA_TELA = 600
+LARGURA_TELA = 1024
+ALTURA_TELA = 768
 COR_FUNDO = (0, 0, 0)
 COR_TEXTO = (0, 255, 0)
 COR_SCANLINE = (0, 50, 0)
@@ -48,7 +48,7 @@ HACKING_TIPOS_ESPECIAIS = [
 NUM_SEQUENCIAS_ESPECIAIS = 4
 
 # --- Comando Secreto de Backdoor ---
-COMANDO_BACKDOOR = ">>>OVERRIDE<<<" # A string exata para o backdoor
+COMANDO_BACKDOOR = "~IDDQD" # A string exata para o backdoor
 
 # --- STATUS DOS SISTEMAS (detalhes e permissões) ---
 SISTEMA_STATUS = {
@@ -99,6 +99,7 @@ SOM_LOGIN_SUCCESS = os.path.join('sons', 'login_success.mp3')
 SOM_LOGIN_FAIL = os.path.join('sons', 'login_fail.mp3')
 SOM_SHUTDOWN = os.path.join('sons', 'shutdown.mp3')
 MUSICA_PURGE_ALERTA = os.path.join('sons', 'purge_alert.mp3')
+SOM_DIGITACAO = os.path.join('sons', 'typing_sound.mp3')
 
 # ALTERADO AQUI: Agora é uma lista de caminhos para as 3 músicas de SERVER_DESTRUCT
 MUSICAS_SERVER_DESTRUCT_ALERTA = [os.path.join('sons', f'server_destruct_alert_{i}.mp3') for i in range(3)]
@@ -111,6 +112,9 @@ PURGE_TEMPO_TOTAL_SEGUNDOS = 15 * 60 # 15 minutos (900 segundos)
 # --- Configurações para a exibição das telas ---
 TEMPO_TELA_INICIAL = 2 # Segundos que a tela inicial "Laboratório St.Agnes" fica visível antes de aguardar input
 TEMPO_TELA_LOADING = 3 # Segundos que a tela de "Loading" fica visível
+
+AD_MESSAGE_BLINK_DURATION_MS = 3000 # Tempo que cada mensagem pisca antes de fixar (3 segundos)
+AD_PAUSE_BETWEEN_MESSAGES_MS = 3000 # Pausa entre uma mensagem fixar e a próxima começar a pisar (3 segundos)
 
 # --- Configurações das Luminárias ---
 IP_LUMINARIA = "192.168.1.100" # <--- SUBSTITUA PELO IP DO SEU ESP8266/LUMINÁRIA (ex: "192.168.1.100")

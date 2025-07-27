@@ -1,0 +1,2 @@
+Este arquivo sinaliza a exibicao do anuncio especial Nakatomi 5.
+O conteudo visual e gerado diretamente no codigo Python.
