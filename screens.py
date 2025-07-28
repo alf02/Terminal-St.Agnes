@@ -67,10 +67,7 @@ def mostrar_tela_loading(screen, fonts, sounds):
     # NOVAS MENSAGENS DE LOADING
     # Variáveis para o ciclo de mensagens do loading (aqui são locais da função)
     loading_messages = [
-        "LOADING...",
-        "LOADING EXPLOSIVES...",
-        "LOADING ANTENAS...",
-        "LOADING CRAZY S**T...",
+        "LOADING..."
     ]
     current_message_index = 0
     last_message_change_time = tempo_inicio # Usa tempo_inicio como o start
@@ -256,7 +253,7 @@ def draw_purge_countdown_screen(screen, fonts, purge_tempo_inicio_ticks, protoco
 
     if protocolo_atual_nome == "PURGE":
         if tempo_restante_segundos > config.PURGE_TEMPO_TOTAL_SEGUNDOS - 10:
-            mensagem_status_purga_base = "Protocolo de Purga:\nValidando credenciais de detonacion..."
+            mensagem_status_purga_base = "Protocolo de Purga:\nValidando credenciais de destruicao..."
             cronometro_cor = config.COR_TEXTO
         elif tempo_restante_segundos > config.PURGE_TEMPO_TOTAL_SEGUNDOS - 20:
             mensagem_status_purga_base = "Protocolo de Purga:\nIniciando sequencia de aniquilacao de dados..."
@@ -266,7 +263,7 @@ def draw_purge_countdown_screen(screen, fonts, purge_tempo_inicio_ticks, protoco
             cronometro_cor = config.COR_TEXTO
         elif tempo_restante_segundos <= 60 and tempo_restante_segundos > 10: # Último minuto
             cronometro_cor = config.COR_ALARME_CLARO
-            mensagem_status_purga_base = "Fase critica:\nDetonacion iminente!"
+            mensagem_status_purga_base = "Fase critica:\nDetonacao iminente!"
         elif tempo_restante_segundos <= 10 and tempo_restante_segundos > 0: # Últimos 10 segundos (piscando)
             cronometro_cor = config.COR_ALARME_CRITICO
             if int(tempo_restante_segundos * 10) % 10 < 5:
