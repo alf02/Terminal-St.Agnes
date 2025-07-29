@@ -101,8 +101,8 @@ SOM_SHUTDOWN = os.path.join('sons', 'shutdown.mp3')
 MUSICA_PURGE_ALERTA = os.path.join('sons', 'purge_alert.mp3')
 SOM_DIGITACAO = os.path.join('sons', 'typing_sound.mp3')
 
-# ALTERADO AQUI: Agora é uma lista de caminhos para as 3 músicas de SERVER_DESTRUCT
-MUSICAS_SERVER_DESTRUCT_ALERTA = [os.path.join('sons', f'server_destruct_alert_{i}.mp3') for i in range(3)]
+# ALTERADO AQUI: Agora é uma lista de caminhos para as 5 músicas de SERVER_DESTRUCT
+MUSICAS_SERVER_DESTRUCT_ALERTA = [os.path.join('sons', f'server_destruct_alert_{i}.mp3') for i in range(5)]
 
 PURGE_CONFIRM_CODES = ["3659", "9963"] # Codigos BRAVO E DELTA.
 

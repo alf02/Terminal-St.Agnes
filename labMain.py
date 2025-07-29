@@ -180,7 +180,7 @@ while True: # Loop externo para reiniciar o terminal completamente
 
     # --- Mensagens iniciais do histórico para LAB MAIN (ST.AGNES) ---
     mensagens_historico = [
-        "ST.AGNES BIOPHARMA INSTITUTE - TERMINAL INTERFACE V2.0", 
+        "ST.AGNES BIOTECH INSTITUTE - TERMINAL INTERFACE V2.0", 
         "COPYRIGHT (C) 2077 UMBRELLA CORP. ALL RIGHTS RESERVED.", 
         "", # Espaço entre o cabeçalho e as instruções
     ]
@@ -189,7 +189,7 @@ while True: # Loop externo para reiniciar o terminal completamente
     mensagens_historico.append("") # Adiciona uma linha em branco final para espaçamento
 
     # --- Chamada das Telas Iniciais ---
-    screens.mostrar_tela_inicial(screen, fonts, "ST.AGNES BIOPHARMA INSTITUTE") 
+    screens.mostrar_tela_inicial(screen, fonts, "ST.AGNES BIOTECH INSTITUTE") 
     screens.mostrar_tela_loading(screen, fonts, sounds)
 
     # CRÍTICO: Limpar a fila de eventos APÓS as telas iniciais
@@ -244,7 +244,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                     break
    # --- NOVO: Lógica de confirmação de purga (entrada de códigos) ---
                 elif estado_terminal == "AGUARDANDO_PURGE_CONFIRMACAO":
-                    if evento.key == pygame.K_RETURN:
+                    if evento.key == pygame.K_RETURN or evento.key == pygame.K_KP_ENTER:
                         play_sound("enter_key")
                         linha_digitada_no_historico = f"CODE {purge_current_code_index + 1}: {purge_entered_code}"
                         mensagens_historico.append(linha_digitada_no_historico) # Adiciona o código digitado ao histórico
@@ -293,7 +293,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                     break # Impede processamento adicional de tecla nesse frame
 
                 elif estado_terminal == "AGUARDANDO_DESTRUCT_CONFIRMACAO":
-                    if evento.key == pygame.K_RETURN:
+                    if evento.key == pygame.K_RETURN or evento.key == pygame.K_KP_ENTER:
                         play_sound("enter_key")
                         linha_digitada_no_historico = f"CODE {destruct_current_code_index + 1}: {destruct_entered_code}"
                         mensagens_historico.append(linha_digitada_no_historico) # Adiciona o código digitado ao histórico
@@ -341,7 +341,7 @@ while True: # Loop externo para reiniciar o terminal completamente
 
                 # --- Processamento de Entrada de Usuário (Baseado no Estado do Terminal) ---
                 if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY", "DISPLAY_NAKATOMI_AD_LOADING", "AGUARDANDO_PURGE_CONFIRMACAO", "AGUARDANDO_DESTRUCT_CONFIRMACAO"]: # Adicionado novos estados aqui para input geral
-                    if evento.key == pygame.K_RETURN:
+                    if evento.key == pygame.K_RETURN or evento.key == pygame.K_KP_ENTER:
                         play_sound("enter_key")                         
                         # Processar o comando ou a senha
                         if estado_terminal == "AGUARDANDO_COMANDO":
