@@ -34,7 +34,7 @@ except FileNotFoundError:
     pygame.quit()
     sys.exit()
 
-# Carregar sons (passados como dicionário para as funções de tela/renderização)
+# Carregar sons (passadas como dicionário para as funções de tela/renderização)
 sounds = {}
 try:
     sounds['boot_up'] = pygame.mixer.Sound(config.SOM_BOOT_UP)
@@ -51,13 +51,11 @@ try:
     sounds['login_fail'].set_volume(0.5)
     sounds['shutdown'] = pygame.mixer.Sound(config.SOM_SHUTDOWN)
     sounds['shutdown'].set_volume(0.7)
+    sounds['typing_sound'] = pygame.mixer.Sound(config.SOM_DIGITACAO) # NOVO
+    sounds['typing_sound'].set_volume(0.1) # Volume ajustado para ser mais sutil # NOVO
     
     sounds['purge_alert'] = pygame.mixer.Sound(config.MUSICA_PURGE_ALERTA)
     sounds['purge_alert'].set_volume(0.5) 
-
-    sounds['typing_sound'] = pygame.mixer.Sound(config.SOM_DIGITACAO)
-    sounds['typing_sound'].set_volume(0.1) # Ajuste o volume para ser sutil
-    
     
     # NÃO CARREGAMOS TODAS as músicas de server_destruct aqui para otimização.
     # Elas serão carregadas dinamicamente quando play_sound('server_destruct_alert_random') for chamado.
@@ -66,9 +64,11 @@ except pygame.error as e:
     print(f"ATENÇÃO: Um ou mais sons não puderam ser carregados: {e}")
     print(f"Verifique se os arquivos de som existem na pasta '{os.path.abspath('sons')}'")
     # Define sons como None para evitar erros se não carregados
-    for key in ['boot_up', 'enter_key', 'valid_command', 'invalid_command', 'login_success', 'login_fail', 'shutdown', 'purge_alert', 'typing_sound']:
+    for key in ['boot_up', 'enter_key', 'valid_command', 'invalid_command', 'login_success', 'login_fail', 'shutdown', 'purge_alert']:
         if key not in sounds:
             sounds[key] = None 
+    if 'typing_sound' not in sounds: # NOVO
+        sounds['typing_sound'] = None # NOVO
 
 # Configurar tela
 screen = pygame.display.set_mode((config.LARGURA_TELA, config.ALTURA_TELA), pygame.NOFRAME)
@@ -76,12 +76,21 @@ pygame.display.set_caption("Terminal Pip-Boy (Fallout Inspired)")
 
 # Todas as variáveis globais que podem ser MODIFICADAS NESTE BLOCO de KEYDOWN.
 global comando_atual, estado_terminal, usuario_tentando_logar, \
-        historico_comandos, historico_indice, \
-        hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
-        hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, hacking_sequencias_ativas, \
-        purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, protocolo_atual_nome, \
-        shutdown_start_time, hack_initiated_by_backdoor, hack_restart_delay_start_time, \
-        ad_loading_start_time, ad_current_message_index, ad_last_message_change_time, ad_message_state, ad_messages_fixed_on_screen 
+    historico_comandos, historico_indice, \
+    hacking_game_ativo, hacking_palavras_possiveis, hacking_senha_correta, \
+    hacking_tentativas_restantes, hacking_likeness_ultima_tentativa, hacking_sequencias_ativas, \
+    purge_protocolo_ativo, purge_tempo_inicio_ticks, purge_mensagem_adicional, protocolo_atual_nome, \
+    shutdown_start_time, hack_initiated_by_backdoor, hack_restart_delay_start_time, \
+    ad_loading_start_time, ad_current_message_index, ad_last_message_change_time, ad_message_state, ad_messages_fixed_on_screen, \
+    purge_confirm_codes, purge_current_code_index, purge_entered_code, \
+    destruct_confirm_codes, destruct_current_code_index, destruct_entered_code
+
+# Variáveis globais para o anúncio (já existentes)
+ad_loading_messages = ["ACCESSING EXTERNAL NETWORK", "FETCHING DATA FROM REMOTE SERVER", "DECRYPTING ADVERTISEMENT PACKET", "DISPLAYING NAKATOMI 5 AD"]
+ad_current_message_index = 0
+ad_last_message_change_time = 0
+ad_message_state = "BLINKING" # "BLINKING" ou "FIXED"
+ad_messages_fixed_on_screen = []
 
 # Funções auxiliares para tocar sons (usadas como callback para evitar dependências circulares)
 def play_sound(sound_type):
@@ -145,23 +154,18 @@ while True: # Loop externo para reiniciar o terminal completamente
     purge_mensagem_adicional = "" 
     protocolo_atual_nome = "" 
     
+    # Variáveis para o processo de confirmação de purga (já existentes)
+    purge_confirm_codes = [] 
+    purge_current_code_index = 0 
+    purge_entered_code = "" 
+
+    # NOVO: Variáveis para o processo de confirmação de DESTRUCT
+    destruct_confirm_codes = [] 
+    destruct_current_code_index = 0 
+    destruct_entered_code = "" 
+
     # Variáveis de Desligamento
     shutdown_start_time = 0 
-
-     # Variável para o tempo de início do loading do anúncio (já existia)
-    ad_loading_start_time = 0 
-
-    # NOVAS: Variáveis para o ciclo de mensagens do loading do anúncio
-    ad_loading_messages = [
-        "LOADING MILSIM...",
-        "LOADING EXPLOSIVES...",
-        "LOADING ANTENAS...",
-        "LOADING CRAZY S**T...",
-    ]
-    ad_current_message_index = 0
-    ad_last_message_change_time = 0 # Tempo da última mudança de mensagem
-    ad_message_state = "BLINKING" # "BLINKING" ou "FIXED"
-    ad_messages_fixed_on_screen = [] # Armazena as mensagens que já foram fixadas
 
     # 'displaying_nakatomi_ad' foi removido, agora o estado é controlado diretamente por 'estado_terminal'
 
@@ -171,8 +175,8 @@ while True: # Loop externo para reiniciar o terminal completamente
 
     # --- Mensagens iniciais do histórico para LAB MAIN (ST.AGNES) ---
     mensagens_historico = [
-        "------ UMBRELLA CORP. SERVER (TM) R.C. LABS INTERFACE ------", 
-        "COPYRIGHT (C) 1998 UMBRELLA CORPORATION. ALL RIGHTS RESERVED.", 
+        "ST.AGNES BIOPHARMA INSTITUTE - TERMINAL INTERFACE V2.0", 
+        "COPYRIGHT (C) 2077 UMBRELLA CORP. ALL RIGHTS RESERVED.", 
         "", # Espaço entre o cabeçalho e as instruções
     ]
     # Adiciona as mensagens de HELP e LOGON da função menus_commands
@@ -180,7 +184,7 @@ while True: # Loop externo para reiniciar o terminal completamente
     mensagens_historico.append("") # Adiciona uma linha em branco final para espaçamento
 
     # --- Chamada das Telas Iniciais ---
-    screens.mostrar_tela_inicial(screen, fonts, "UMBRELLA CORP SERVER") 
+    screens.mostrar_tela_inicial(screen, fonts, "ST.AGNES BIOPHARMA INSTITUTE") 
     screens.mostrar_tela_loading(screen, fonts, sounds)
 
     # CRÍTICO: Limpar a fila de eventos APÓS as telas iniciais
@@ -220,7 +224,7 @@ while True: # Loop externo para reiniciar o terminal completamente
             elif evento.type == pygame.K_RIGHT and pygame.key.get_mods() & pygame.KMOD_ALT: 
                 rodando = False
             elif evento.type == pygame.KEYDOWN: 
-                # --- Lógica para sair de estados especiais ao pressionar qualquer tecla ---
+               # --- Lógica para sair de estados especiais ao pressionar qualquer tecla ---
                 if estado_terminal == "DISPLAY_NAKATOMI_AD": # Sai do anúncio
                     estado_terminal = "AGUARDANDO_COMANDO" # Retorna ao terminal normal
                     pygame.event.clear() # Limpa a fila de eventos para evitar inputs indesejados
@@ -228,22 +232,118 @@ while True: # Loop externo para reiniciar o terminal completamente
                 
                 # Se está na tela de loading do anúncio, qualquer tecla volta mais rápido
                 elif estado_terminal == "DISPLAY_NAKATOMI_AD_LOADING":
-                    # Pula o loading e vai direto para o anúncio (agora para todas as mensagens fixas)
                     ad_messages_fixed_on_screen = list(ad_loading_messages) # Fixa todas as mensagens de uma vez
                     estado_terminal = "DISPLAY_NAKATOMI_AD" 
                     pygame.event.clear()
                     break
 
+                # --- Lógica de confirmação de purga (entrada de códigos) ---
+                elif estado_terminal == "AGUARDANDO_PURGE_CONFIRMACAO":
+                    if evento.key == pygame.K_RETURN or evento.key == pygame.K_KP_ENTER:
+                        play_sound("enter_key")
+                        linha_digitada_no_historico = f"CODE {purge_current_code_index + 1}: {purge_entered_code}"
+                        mensagens_historico.append(linha_digitada_no_historico)
+                        
+                        if purge_current_code_index < len(config.PURGE_CONFIRM_CODES) and \
+                           purge_entered_code.strip().upper() == config.PURGE_CONFIRM_CODES[purge_current_code_index].upper():
+                            
+                            purge_current_code_index += 1 
+                            purge_entered_code = "" 
+                            
+                            if purge_current_code_index == len(config.PURGE_CONFIRM_CODES): # Se todos os códigos foram inseridos
+                                mensagens_historico.append("\nCODIGOS DE PURGA VALIDADO. INICIANDO PROTOCOLO.")
+                                play_sound("valid_command")
+                                
+                                # Inicia o protocolo de purga (mesma lógica que antes)
+                                purge_protocolo_ativo = True
+                                purge_tempo_inicio_ticks = pygame.time.get_ticks()
+                                purge_mensagem_adicional = "Validando credenciais para Protocolo de Purga..."
+                                protocolo_atual_nome = "PURGE" 
+                                if sounds.get('purge_alert') and not pygame.mixer.music.get_busy():
+                                    play_sound("purge_alert") 
+                                luz_api.ligar_piscar_vermelho() 
+                                estado_terminal = "PURGE_CONTADOR"
+                            else: # Mais códigos necessários
+                                mensagens_historico.append(f"CODIGO {purge_current_code_index} DE {len(config.PURGE_CONFIRM_CODES)} ACEITO.")
+                                play_sound("valid_command")
+                                mensagens_historico.append(f"\nDIGITE O CODIGO {purge_current_code_index + 1}:")
+
+                        else: # Código incorreto
+                            mensagens_historico.append(f"CODIGO {purge_current_code_index + 1} INCORRETO. PURGA ABORTADA.")
+                            play_sound("invalid_command")
+                            purge_entered_code = "" 
+                            estado_terminal = "AGUARDANDO_COMANDO"
+                            
+                        comando_atual = "" # Sempre limpa o comando após ENTER
+                        
+                    elif evento.key == pygame.K_BACKSPACE:
+                        if purge_entered_code: # Garante que não apaga de uma string vazia
+                            purge_entered_code = purge_entered_code[:-1]
+                            play_sound('typing_sound') # NOVO: Som de digitação ao apagar
+                    else: # Caracteres digitáveis para o código
+                        if evento.unicode and evento.unicode.isprintable():
+                            purge_entered_code += evento.unicode
+                            play_sound('typing_sound') 
+                    break # Impede processamento adicional de tecla nesse frame
+
+                # NOVO: Lógica de confirmação de DESTRUCT (entrada de códigos)
+                elif estado_terminal == "AGUARDANDO_DESTRUCT_CONFIRMACAO":
+                    if evento.key == pygame.K_RETURN or evento.key == pygame.K_KP_ENTER:
+                        play_sound("enter_key")
+                        linha_digitada_no_historico = f"CODE {destruct_current_code_index + 1}: {destruct_entered_code}"
+                        mensagens_historico.append(linha_digitada_no_historico) # Adiciona o código digitado ao histórico
+
+                        # Verifica o código
+                        if destruct_current_code_index < len(config.SERVER_DESTRUCT_CONFIRM_CODES) and \
+                           destruct_entered_code.strip().upper() == config.SERVER_DESTRUCT_CONFIRM_CODES[destruct_current_code_index].upper():
+                            
+                            destruct_current_code_index += 1 # Avança para o próximo código
+                            destruct_entered_code = "" # Limpa o buffer para o próximo código
+                            
+                            if destruct_current_code_index == len(config.SERVER_DESTRUCT_CONFIRM_CODES): # Se todos os códigos foram inseridos
+                                mensagens_historico.append("\nCODIGOS DE DESTRUICAO VALIDADO. INICIANDO PROTOCOLO.")
+                                play_sound("valid_command")
+                                
+                                # Inicia o protocolo de destruição (lógica existente)
+                                purge_protocolo_ativo = True
+                                purge_tempo_inicio_ticks = pygame.time.get_ticks()
+                                purge_mensagem_adicional = "Validando credenciais para Destruicao de Servidor..."
+                                protocolo_atual_nome = "SERVER_DESTRUCT" 
+                                play_sound("server_destruct_alert_random") 
+                                luz_api.ligar_piscar_vermelho() 
+                                estado_terminal = "PURGE_CONTADOR" # Usa o mesmo estado de contagem
+                            else: # Mais códigos necessários
+                                mensagens_historico.append(f"CODIGO {destruct_current_code_index} DE {len(config.SERVER_DESTRUCT_CONFIRM_CODES)} ACEITO.")
+                                play_sound("valid_command")
+                                mensagens_historico.append(f"\nDIGITE O CODIGO {destruct_current_code_index + 1}:")
+
+                        else: # Código incorreto
+                            mensagens_historico.append(f"CODIGO {destruct_current_code_index + 1} INCORRETO. DESTRUICAO ABORTADA.")
+                            play_sound("invalid_command")
+                            destruct_entered_code = "" 
+                            estado_terminal = "AGUARDANDO_COMANDO"
+                            
+                        comando_atual = "" # Sempre limpa o comando após ENTER
+                        
+                    elif evento.key == pygame.K_BACKSPACE:
+                        if destruct_entered_code: 
+                            destruct_entered_code = destruct_entered_code[:-1]
+                            play_sound('typing_sound') # NOVO: Som de digitação ao apagar
+                    else: # Caracteres digitáveis para o código
+                        if evento.unicode and evento.unicode.isprintable():
+                            destruct_entered_code += evento.unicode
+                            play_sound('typing_sound') 
+                    break # Impede processamento adicional de tecla nesse frame
+
 
                 # --- Processamento de Entrada de Usuário (Baseado no Estado do Terminal) ---
-                if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY", "DISPLAY_NAKATOMI_AD_LOADING"]: 
-                    if evento.key == pygame.K_RETURN:
+                if estado_terminal not in ["PURGE_CONTADOR", "DESLIGANDO", "TERMINAL_BLOQUEADO", "HACK_RESTART_DELAY", "DISPLAY_NAKATOMI_AD_LOADING", "AGUARDANDO_PURGE_CONFIRMACAO", "AGUARDANDO_DESTRUCT_CONFIRMACAO"]: 
+                    if evento.key == pygame.K_RETURN or evento.key == pygame.K_KP_ENTER: # <--- ENTER PADRAO E DO TECLADO NUMERICO
                         play_sound("enter_key") 
                         
-                        # Processar o comando ou a senha
                         if estado_terminal == "AGUARDANDO_COMANDO":
                             linha_digitada_no_historico = f"{sistema_arquivos.get_caminho_atual_exibicao()}{comando_atual}" 
-                            if comando_atual.strip() != "": # Apenas adiciona ao histórico se algo foi digitado
+                            if comando_atual.strip() != "": 
                                 historico_comandos.append(comando_atual.strip())
                                 historico_indice = -1 
                                 mensagens_historico.append(linha_digitada_no_historico)
@@ -310,23 +410,21 @@ while True: # Loop externo para reiniciar o terminal completamente
                                     elif sugestao_proximo_estado == "EXIT_GAME":
                                         estado_terminal = "DESLIGANDO"
                                         shutdown_start_time = pygame.time.get_ticks()
-                                    elif sugestao_proximo_estado == "ATIVAR_PURGE":
-                                        purge_protocolo_ativo = True
-                                        purge_tempo_inicio_ticks = pygame.time.get_ticks()
-                                        purge_mensagem_adicional = "Validando credenciais para Protocolo de Purga..."
-                                        protocolo_atual_nome = "PURGE"
-                                        if sounds.get('purge_alert') and not pygame.mixer.music.get_busy():
-                                            play_sound("purge_alert") 
-                                        luz_api.ligar_piscar_vermelho() 
-                                        estado_terminal = "PURGE_CONTADOR"
-                                    elif sugestao_proximo_estado == "ATIVAR_SERVER_DESTRUCT":
-                                        purge_protocolo_ativo = True
-                                        purge_tempo_inicio_ticks = pygame.time.get_ticks()
-                                        purge_mensagem_adicional = "Validando credenciais para Destruicao de Servidor..."
-                                        protocolo_atual_nome = "SERVER_DESTRUCT"
-                                        play_sound("server_destruct_alert_random") 
-                                        luz_api.ligar_piscar_vermelho() 
-                                        estado_terminal = "PURGE_CONTADOR"
+                                    elif sugestao_proximo_estado == "ATIVAR_PURGE": 
+                                        mensagens_historico.append("\nINICIANDO PROTOCOLO DE PURGA.")
+                                        mensagens_historico.append(f"DIGITE O CODIGO 1 DE {len(config.PURGE_CONFIRM_CODES)}:")
+                                        estado_terminal = "AGUARDANDO_PURGE_CONFIRMACAO" 
+                                        purge_current_code_index = 0 
+                                        purge_entered_code = "" 
+                                        comando_atual = "" 
+                                    # NOVO: Transiciona para o novo estado de confirmação
+                                    elif sugestao_proximo_estado == "ATIVAR_SERVER_DESTRUCT": 
+                                        mensagens_historico.append("\nINICIANDO PROTOCOLO DE DESTRUICAO DE SERVIDOR.")
+                                        mensagens_historico.append(f"DIGITE O CODIGO 1 DE {len(config.SERVER_DESTRUCT_CONFIRM_CODES)}:")
+                                        estado_terminal = "AGUARDANDO_DESTRUCT_CONFIRMACAO" 
+                                        destruct_current_code_index = 0 
+                                        destruct_entered_code = "" 
+                                        comando_atual = "" 
                                     elif sugestao_proximo_estado == "DISPLAY_NAKATOMI_AD": 
                                         estado_terminal = "DISPLAY_NAKATOMI_AD_LOADING" 
                                         ad_loading_start_time = pygame.time.get_ticks()                                         
@@ -393,9 +491,9 @@ while True: # Loop externo para reiniciar o terminal completamente
                                         mensagens_historico.append("Nenhuma palavra 'dud' para remover. Tentativas +1.")
                                         hacking_tentativas_restantes += 1
                                         mensagens_historico.append(f"Tentativas restantes: {hacking_tentativas_restantes}")
-                                elif efeito == "attempt":
-                                    hacking_tentativas_restantes += 1
-                                    mensagens_historico.append(f"Tentativa adicional concedida. Tentativas restantes: {hacking_tentativas_restantes}")
+                            elif efeito == "attempt":
+                                hacking_tentativas_restantes += 1
+                                mensagens_historico.append(f"Tentativa adicional concedida. Tentativas restantes: {hacking_tentativas_restantes}")
                             
                                 if palpite in hacking_palavras_possiveis: 
                                     hacking_palavras_possiveis.remove(palpite)
@@ -446,6 +544,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                         if comando_atual: 
                             comando_atual = comando_atual[:-1]
                             historico_indice = -1 
+                            play_sound('typing_sound')
                     elif evento.key == pygame.K_UP:
                         if historico_comandos:
                             if historico_indice == -1: 
@@ -467,7 +566,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                         if evento.unicode and evento.unicode.isprintable():
                             if estado_terminal == "AGUARDANDO_SENHA":
                                 comando_atual += evento.unicode
-                                play_sound('typing_sound') 
+                                play_sound('typing_sound')
                             elif estado_terminal == "AGUARDANDO_COMANDO" or estado_terminal == "HACKING":
                                 comando_atual += evento.unicode
                                 play_sound('typing_sound') 
@@ -507,7 +606,7 @@ while True: # Loop externo para reiniciar o terminal completamente
             screens.draw_hack_restart_delay_screen(screen, fonts, hack_restart_delay_start_time, current_time_ticks)
 
             tempo_atraso_passado = (current_time_ticks - hack_restart_delay_start_time) / 1000
-            if tempo_atraso_passado >= config.HACK_RESTART_DURATION_MS / 1000:
+            if tempo_passado_segundos >= config.HACK_RESTART_DURATION_MS / 1000:
                 dados_hacking = hacking_logic.initialize_hacking_game_data()
                 hacking_game_ativo = True
                 hacking_palavras_possiveis = dados_hacking['palavras']
@@ -529,11 +628,56 @@ while True: # Loop externo para reiniciar o terminal completamente
                 comando_atual = ""
                 play_sound("valid_command")
                 
+        elif estado_terminal == "AGUARDANDO_PURGE_CONFIRMACAO": 
+            # Renderiza apenas o prompt e o comando atual (o código digitado)
+            prompt_y_offset = config.ALTURA_TELA - (config.TAMANHO_FONTE + 10) 
+            
+            prompt_texto = f"CODE {purge_current_code_index + 1}: " 
+            texto_renderizado_comando = fonts['normal'].render(prompt_texto + purge_entered_code, True, config.COR_TEXTO)
+
+            screen.blit(texto_renderizado_comando, (10, prompt_y_offset))
+
+            # Lógica do cursor piscando no prompt
+            tempo_atual = pygame.time.get_ticks()
+            if int(tempo_atual / config.INTERVALO_CURSOR_PISCAR) % 2 == 0:
+                cursor_pos_x = 10 + texto_renderizado_comando.get_width()
+                cursor_rect = pygame.Rect(cursor_pos_x, prompt_y_offset, fonts['normal'].size(" ")[0], config.TAMANHO_FONTE)
+                pygame.draw.rect(screen, config.COR_TEXTO, cursor_rect)
+
+            # Renderiza as scanlines (sempre)
+            for y in range(0, config.ALTURA_TELA, 3):
+                pygame.draw.line(screen, config.COR_SCANLINE, (0, y), (config.LARGURA_TELA, y)) 
+            pygame.display.flip()
+            pygame.time.Clock().tick(60)
+
+        # NOVO: Renderização para o estado de confirmação de DESTRUCT
+        elif estado_terminal == "AGUARDANDO_DESTRUCT_CONFIRMACAO": 
+            # Renderiza apenas o prompt e o comando atual (o código digitado)
+            prompt_y_offset = config.ALTURA_TELA - (config.TAMANHO_FONTE + 10) 
+            
+            prompt_texto = f"CODE {destruct_current_code_index + 1}: " 
+            texto_renderizado_comando = fonts['normal'].render(prompt_texto + destruct_entered_code, True, config.COR_TEXTO)
+
+            screen.blit(texto_renderizado_comando, (10, prompt_y_offset))
+
+            # Lógica do cursor piscando no prompt
+            tempo_atual = pygame.time.get_ticks()
+            if int(tempo_atual / config.INTERVALO_CURSOR_PISCAR) % 2 == 0:
+                cursor_pos_x = 10 + texto_renderizado_comando.get_width()
+                cursor_rect = pygame.Rect(cursor_pos_x, prompt_y_offset, fonts['normal'].size(" ")[0], config.TAMANHO_FONTE)
+                pygame.draw.rect(screen, config.COR_TEXTO, cursor_rect)
+
+            # Renderiza as scanlines (sempre)
+            for y in range(0, config.ALTURA_TELA, 3):
+                pygame.draw.line(screen, config.COR_SCANLINE, (0, y), (config.LARGURA_TELA, y)) 
+            pygame.display.flip()
+            pygame.time.Clock().tick(60)
+                
         elif estado_terminal == "DISPLAY_NAKATOMI_AD_LOADING": # ESTADO DE RENDERIZAÇÃO PARA O ANÚNCIO LOADING
             current_time_ticks = pygame.time.get_ticks()
-
-            messages_interval_ms = 1500 # Cada mensagem dura 1.5 segundos
-
+            
+            messages_interval_ms = 500 # Cada mensagem dura 0.5 segundos
+            
             # Gerencia a transição de mensagens e estado de piscar/fixar
             if current_time_ticks - ad_last_message_change_time > messages_interval_ms:
                 if ad_current_message_index < len(ad_loading_messages): 
@@ -547,6 +691,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                             ad_message_state = "BLINKING"
                             ad_last_message_change_time = current_time_ticks
                         else: # Todas as mensagens foram exibidas e fixadas
+                            # Transiciona para a exibição real do anúncio
                             estado_terminal = "DISPLAY_NAKATOMI_AD" 
                             pygame.event.clear() 
                             
@@ -563,7 +708,6 @@ while True: # Loop externo para reiniciar o terminal completamente
             if ad_current_message_index < len(ad_loading_messages):
                 current_ad_message_text = ad_loading_messages[ad_current_message_index]
                 
-                # --- CORREÇÃO AQUI para o piscar/fixar e não duplicar ---
                 # Renderiza SOMENTE se a mensagem atual estiver no estado BLINKING E visível no ciclo de piscar
                 if ad_message_state == "BLINKING" and int(current_time_ticks / config.INTERVALO_CURSOR_PISCAR) % 2 == 0:
                     render_current_loading = fonts['media'].render(current_ad_message_text, True, config.COR_TEXTO) 
@@ -582,30 +726,28 @@ while True: # Loop externo para reiniciar o terminal completamente
             screen.fill(config.COR_FUNDO)
             
             # Título: NAKATOMI 5
-            text_nakatomi = fonts['cronometro'].render("NAKATOMI 5", True, config.COR_TEXTO)
-            nakatomi_rect = text_nakatomi.get_rect(center=(config.LARGURA_TELA // 2, config.ALTURA_TELA // 2 - 150))
+            text_nakatomi = fonts['grande'].render("NAKATOMI 5", True, config.COR_TEXTO)
+            nakatomi_rect = text_nakatomi.get_rect(center=(config.LARGURA_TELA // 2, config.ALTURA_TELA // 2 - 100))
             screen.blit(text_nakatomi, nakatomi_rect)
 
-            # Subtítulo 1: DISTRITO 47 INDOOR
-            text_st_agnes = fonts['media'].render("DISTRITO 47 INDOOR", True, config.COR_TEXTO) 
+            # Subtítulo 1: ST.AGNES BIOPHARMA INSTITUTE
+            text_st_agnes = fonts['media'].render("ST.AGNES BIOPHARMA INSTITUTE", True, config.COR_TEXTO) 
             # Espaçamento de 40 pixels entre o título e o subtítulo
-            st_agnes_rect = text_st_agnes.get_rect(center=(config.LARGURA_TELA // 2, nakatomi_rect.bottom + 60)) 
+            st_agnes_rect = text_st_agnes.get_rect(center=(config.LARGURA_TELA // 2, nakatomi_rect.bottom + 40)) 
             screen.blit(text_st_agnes, st_agnes_rect)
 
             # Subtítulo 2: Data e Local
             text_date_location = fonts['media'].render("27.09.25 - B. CAMBORIU/SC", True, config.COR_TEXTO) 
             # Espaçamento de 20 pixels entre o subtítulo 1 e o subtítulo 2
-            date_location_rect = text_date_location.get_rect(center=(config.LARGURA_TELA // 2, st_agnes_rect.bottom + 40)) 
+            date_location_rect = text_date_location.get_rect(center=(config.LARGURA_TELA // 2, st_agnes_rect.bottom + 20)) 
             screen.blit(text_date_location, date_location_rect)
 
             # Chamada para Ação (AGORA PISCA)
             if int(tempo_frame / config.INTERVALO_CURSOR_PISCAR) % 2 == 0: # Aplicar lógica de piscar aqui
-                text_cta = fonts['grande'].render("INSCREVA-SE AGORA", True, config.COR_TEXTO) 
+                text_cta = fonts['media'].render("INSCREVA-SE AGORA", True, config.COR_TEXTO) 
                 # Espaçamento de 40 pixels entre a data/local e o CTA
-                cta_rect = text_cta.get_rect(center=(config.LARGURA_TELA // 2, date_location_rect.bottom + 100))
+                cta_rect = text_cta.get_rect(center=(config.LARGURA_TELA // 2, date_location_rect.bottom + 40))
                 screen.blit(text_cta, cta_rect)
-            
-            # "Pressione qualquer tecla para continuar" (REMOVIDO)
             
             # Scanlines e flip são comuns a todas as telas
             for y in range(0, config.ALTURA_TELA, 3):
