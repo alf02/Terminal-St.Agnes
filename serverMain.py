@@ -245,7 +245,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                         mensagens_historico.append(linha_digitada_no_historico)
                         
                         if purge_current_code_index < len(config.PURGE_CONFIRM_CODES) and \
-                           purge_entered_code.strip().upper() == config.PURGE_CONFIRM_CODES[purge_current_code_index].upper():
+                           purge_entered_code.strip().upper() == config.PURGE_CONFIRM_CODES[purge_current_code_index][1].upper():
                             
                             purge_current_code_index += 1 
                             purge_entered_code = "" 
@@ -295,7 +295,7 @@ while True: # Loop externo para reiniciar o terminal completamente
 
                         # Verifica o código
                         if destruct_current_code_index < len(config.SERVER_DESTRUCT_CONFIRM_CODES) and \
-                           destruct_entered_code.strip().upper() == config.SERVER_DESTRUCT_CONFIRM_CODES[destruct_current_code_index].upper():
+                           destruct_entered_code.strip().upper() == config.SERVER_DESTRUCT_CONFIRM_CODES[destruct_current_code_index][1].upper():
                             
                             destruct_current_code_index += 1 # Avança para o próximo código
                             destruct_entered_code = "" # Limpa o buffer para o próximo código
@@ -632,7 +632,9 @@ while True: # Loop externo para reiniciar o terminal completamente
             # Renderiza apenas o prompt e o comando atual (o código digitado)
             prompt_y_offset = config.ALTURA_TELA - (config.TAMANHO_FONTE + 10) 
             
-            prompt_texto = f"CODE {purge_current_code_index + 1}: " 
+            prompt_name = config.PURGE_CONFIRM_CODES[purge_current_code_index][0] # Usa o nome do código (ex: BRAVO, DELTA)
+
+            prompt_texto = f"CODE {prompt_name}: "
             texto_renderizado_comando = fonts['normal'].render(prompt_texto + purge_entered_code, True, config.COR_TEXTO)
 
             screen.blit(texto_renderizado_comando, (10, prompt_y_offset))
@@ -655,7 +657,10 @@ while True: # Loop externo para reiniciar o terminal completamente
             # Renderiza apenas o prompt e o comando atual (o código digitado)
             prompt_y_offset = config.ALTURA_TELA - (config.TAMANHO_FONTE + 10) 
             
-            prompt_texto = f"CODE {destruct_current_code_index + 1}: " 
+         # NOVO: Altera o prompt para usar o nome do código
+            prompt_name = config.SERVER_DESTRUCT_CONFIRM_CODES[destruct_current_code_index][0]
+            prompt_texto = f"CODE {prompt_name}:"
+
             texto_renderizado_comando = fonts['normal'].render(prompt_texto + destruct_entered_code, True, config.COR_TEXTO)
 
             screen.blit(texto_renderizado_comando, (10, prompt_y_offset))
