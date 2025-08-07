@@ -660,7 +660,7 @@ while True: # Loop externo para reiniciar o terminal completamente
             
             # NOVO: Altera o prompt para usar o nome do código
             prompt_name = config.SERVER_DESTRUCT_CONFIRM_CODES[destruct_current_code_index][0]
-            prompt_texto = f"CODE {prompt_name + 1} :"
+            prompt_texto = f"CODE {prompt_name} :"
 
 
             texto_renderizado_comando = fonts['normal'].render(prompt_texto + destruct_entered_code, True, config.COR_TEXTO)
