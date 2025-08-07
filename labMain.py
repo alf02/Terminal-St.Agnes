@@ -246,7 +246,8 @@ while True: # Loop externo para reiniciar o terminal completamente
                 elif estado_terminal == "AGUARDANDO_PURGE_CONFIRMACAO":
                     if evento.key == pygame.K_RETURN or evento.key == pygame.K_KP_ENTER:
                         play_sound("enter_key")
-                        linha_digitada_no_historico = f"CODE {purge_current_code_index + 1}: {purge_entered_code}"
+                        prompt_name= config.PURGE_CONFIRM_CODES[purge_current_code_index][0] # Usa o nome do código (ex: BRAVO, DELTA)
+                        linha_digitada_no_historico = f"CODE {prompt_name}: {purge_entered_code}"
                         mensagens_historico.append(linha_digitada_no_historico) # Adiciona o código digitado ao histórico
                         
                         # Verifica o código
@@ -270,12 +271,14 @@ while True: # Loop externo para reiniciar o terminal completamente
                                 luz_api.ligar_piscar_vermelho() 
                                 estado_terminal = "PURGE_CONTADOR"
                             else: # Mais códigos necessários
-                                mensagens_historico.append(f"CODIGO {purge_current_code_index} DE {len(config.PURGE_CONFIRM_CODES)} ACEITO.")
+                                mensagens_historico.append(f"CODE {prompt_name} ACEITO.")
                                 play_sound("valid_command")
-                                mensagens_historico.append(f"\nDIGITE O CODIGO {purge_current_code_index + 1}:")
+                                purge_next_code = config.PURGE_CONFIRM_CODES[purge_current_code_index][0]
+                                mensagens_historico.append(f"\nDIGITE O CODIGO {purge_next_code}:")
 
                         else: # Código incorreto
-                            mensagens_historico.append(f"CODIGO {purge_current_code_index + 1} INCORRETO. PURGA ABORTADA.")
+                            purge_next_code = config.PURGE_CONFIRM_CODES[purge_current_code_index][0]
+                            mensagens_historico.append(f"CODE {purge_next_code} INCORRETO. PURGA ABORTADA.")
                             play_sound("invalid_command")
                             purge_entered_code = "" # Limpa o buffer
                             # Reseta o estado para o comando normal
@@ -295,12 +298,13 @@ while True: # Loop externo para reiniciar o terminal completamente
                 elif estado_terminal == "AGUARDANDO_DESTRUCT_CONFIRMACAO":
                     if evento.key == pygame.K_RETURN or evento.key == pygame.K_KP_ENTER:
                         play_sound("enter_key")
-                        linha_digitada_no_historico = f"CODE {destruct_current_code_index + 1}: {destruct_entered_code}"
+                        destruct_current_code_name = config.SERVER_DESTRUCT_CONFIRM_CODES[destruct_current_code_index][0] # Usa o nome do código (ex: ALFA, CHARLIE)
+                        linha_digitada_no_historico = f"CODE {destruct_current_code_name}: {destruct_entered_code}"
                         mensagens_historico.append(linha_digitada_no_historico) # Adiciona o código digitado ao histórico
 
                         # Verifica o código
                         if destruct_current_code_index < len(config.SERVER_DESTRUCT_CONFIRM_CODES) and \
-                           destruct_entered_code.strip().upper() == config.SERVER_DESTRUCT_CONFIRM_CODES[destruct_current_code_index].upper():
+                           destruct_entered_code.strip().upper() == config.SERVER_DESTRUCT_CONFIRM_CODES[destruct_current_code_index][1].upper():
                             
                             destruct_current_code_index += 1 # Avança para o próximo código
                             destruct_entered_code = "" # Limpa o buffer para o próximo código
@@ -635,8 +639,7 @@ while True: # Loop externo para reiniciar o terminal completamente
             
             # Renderiza apenas o prompt e o comando atual (o código digitado)
             prompt_name = config.PURGE_CONFIRM_CODES[purge_current_code_index][0] # Usa o nome do código (ex: BRAVO, DELTA)
-
-            prompt_texto = f"CODE {prompt_name}: "
+            prompt_texto = f"{prompt_name} CODE: "
             texto_renderizado_comando = fonts['normal'].render(prompt_texto + purge_entered_code, True, config.COR_TEXTO)
 
             screen.blit(texto_renderizado_comando, (10, prompt_y_offset))
@@ -660,7 +663,7 @@ while True: # Loop externo para reiniciar o terminal completamente
             
             # NOVO: Altera o prompt para usar o nome do código
             prompt_name = config.SERVER_DESTRUCT_CONFIRM_CODES[destruct_current_code_index][0]
-            prompt_texto = f"CODE {prompt_name} :"
+            prompt_texto = f"{prompt_name} CODE: "
 
 
             texto_renderizado_comando = fonts['normal'].render(prompt_texto + destruct_entered_code, True, config.COR_TEXTO)

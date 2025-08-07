@@ -61,9 +61,9 @@ def mostrar_tela_loading(screen, fonts, sounds):
     
     mensagens_loading_header = "LEAV -- DUSK % (C) 1987"
     mensagens_loading_footer = "Loading: user_info/password.txt::[File found]"
-    
-    st_agnes_texto = "ST.AGNES BIOPHARMA INSTITUTE" # Nome da empresa (fixo nesta tela)
-    
+
+    st_agnes_texto = "ST.AGNES BIOTECH INSTITUTE" # Nome da empresa (fixo nesta tela)
+
     # NOVAS MENSAGENS DE LOADING
     # Variáveis para o ciclo de mensagens do loading (aqui são locais da função)
     loading_messages = [
@@ -158,7 +158,7 @@ def draw_shutdown_animation(screen, fonts, shutdown_start_time):
     screen.fill(config.COR_FUNDO)
 
     # Nome da empresa no topo (com fonte 'grande')
-    st_agnes_texto = "ST.AGNES BIOPHARMA INSTITUTE"
+    st_agnes_texto = "ST.AGNES BIOTECH INSTITUTE"
     render_empresa = fonts['grande'].render(st_agnes_texto, True, config.COR_TEXTO)
     x_empresa = (config.LARGURA_TELA - render_empresa.get_width()) // 2
     y_empresa = config.ALTURA_TELA // 4
