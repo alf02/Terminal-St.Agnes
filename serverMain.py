@@ -70,7 +70,10 @@ except pygame.error as e:
         if key not in sounds:
             sounds[key] = None 
 
-# Configurar tela
+# --- Configurar tela (NOVO CÓDIGO) ---
+info = pygame.display.Info()
+config.LARGURA_TELA=info.current_w
+config.ALTURA_TELA = info.current_h
 screen = pygame.display.set_mode((config.LARGURA_TELA, config.ALTURA_TELA), pygame.FULLSCREEN)
 pygame.display.set_caption("Terminal Pip-Boy (Fallout Inspired)")
 
