@@ -119,6 +119,6 @@ TEMPO_TELA_LOADING = 3 # Segundos que a tela de "Loading" fica visível
 AD_MESSAGE_BLINK_DURATION_MS = 3000 # Tempo que cada mensagem pisca antes de fixar (3 segundos)
 AD_PAUSE_BETWEEN_MESSAGES_MS = 3000 # Pausa entre uma mensagem fixar e a próxima começar a pisar (3 segundos)
 
-# --- Configurações das Luminárias ---
-IP_LUMINARIA = "192.168.1.100" # <--- SUBSTITUA PELO IP DO SEU ESP8266/LUMINÁRIA (ex: "192.168.1.100")
-PORTA_LUMINARIA = 8888        # Porta UDP que o ESP8266 estará escutando (ex: 8888)
+# --- Configurações das Luminárias (AGORA USANDO MQTT) ---
+IP_LUZ = "192.168.3.10" # <--- SUBSTITUA PELO IP DO SEU BROKER MQTT (pode ser o IP do PC ou do Pi)
+PORTA_MQTT_BROKER = 1883       # Porta padrão do Mosquitto

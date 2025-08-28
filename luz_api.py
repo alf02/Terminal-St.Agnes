@@ -1,55 +1,55 @@
-import socket
-import config # Para acessar o IP_LUMINARIA e PORTA_LUMINARIA
+import paho.mqtt.client as mqtt
+import config
 
-# --- Configurações UDP ---
+# --- Configurações MQTT ---
 # O IP e a porta serão definidos em config.py
+MQTT_TOPIC_COMMANDS = "naka5/servidor/cmd" # Tópico para o qual o terminal vai publicar
+MQTT_QOS = 2 # Qualidade de Servico (garante entrega da mensagem)
 
-def enviar_comando_luminaria(comando):
+def on_connect(client, userdata, flags, rc):
+    if rc == 0:
+        print("Conectado ao broker MQTT com sucesso!")
+    else:
+        print(f"Falha na conexao ao broker, código de retorno: {rc}")
+
+def enviar_comando_mqtt(comando):
     """
-    Envia um comando UDP para as luminárias.
-    Comandos esperados: "BLINK_RED_ON", "BLINK_RED_OFF"
+    Conecta ao broker MQTT e publica um comando.
+    Comandos esperados: "LIGAR_LUZ", "LIGAR_SIRENE", "DESLIGAR_TUDO"
     """
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-        sock.settimeout(0.1) # Timeout curto para não travar o programa
+        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
+        client.on_connect = on_connect
+        client.connect(config.IP_LUZ, config.PORTA_MQTT_BROKER)
         
-        # O IP e a porta virão do config.py
-        server_address = (config.IP_LUMINARIA, config.PORTA_LUMINARIA)
-        
-        message = comando.encode('utf-8')
-        
-        # print(f"DEBUG: Enviando comando UDP '{comando}' para {config.IP_LUMINARIA}:{config.PORTA_LUMINARIA}")
-        sock.sendto(message, server_address)
-        
-        # Não esperamos resposta, mas podemos adicionar um recvfrom para depuração se necessário
-        # data, server = sock.recvfrom(4096)
-        # print(f"DEBUG: Resposta recebida: {data.decode('utf-8')}")
-        
-    except socket.timeout:
-        # print(f"DEBUG: Timeout ao enviar comando UDP para {config.IP_LUMINARIA}:{config.PORTA_LUMINARIA}. Verifique a conexão.")
-        pass # Não travar o jogo se a luminária não estiver online
+        # Envia a mensagem para o tópico
+        client.publish(MQTT_TOPIC_COMMANDS, payload=comando, qos=MQTT_QOS, retain=False)
+        print(f"DEBUG: Comando MQTT '{comando}' publicado no tópico '{MQTT_TOPIC_COMMANDS}'.")
+        client.disconnect()
+
     except Exception as e:
-        # print(f"ERRO ao enviar comando UDP para luminária: {e}")
-        pass # Não travar o jogo em caso de outros erros de rede
-    finally:
-        sock.close()
+        print(f"ERRO ao enviar comando MQTT para luz: {e}")
 
-def ligar_piscar_vermelho():
-    """Envia o comando para as luminárias começarem a piscar em vermelho."""
-    enviar_comando_luminaria("BLINK_RED_ON")
+def ligar_luz():
+    """Envia o comando 'lampada'."""
+    enviar_comando_mqtt("lampada")
 
-def desligar_piscar_vermelho():
-    """Envia o comando para as luminárias pararem de piscar em vermelho."""
-    enviar_comando_luminaria("BLINK_RED_OFF")
+def ligar_sirene():
+    """Envia o comando 'sirenes'."""
+    enviar_comando_mqtt("sirenes")
 
-# Exemplo de uso (apenas para teste direto deste arquivo)
+def desligar_tudo():
+    """Envia o comando 'DESLIGAR_TUDO'."""
+    enviar_comando_mqtt("DESLIGAR_TUDO")
+
+# Exemplo de uso (para teste)
 if __name__ == "__main__":
-    # Certifique-se de que config.py tenha IP_LUMINARIA e PORTA_LUMINARIA definidos
-    print("Testando API das Luminárias...")
-    print("Ligando piscar vermelho por 5 segundos...")
-    ligar_piscar_vermelho()
+    print("Testando API das Luz com MQTT...")
+    # OBS: O broker precisa estar rodando no IP e porta configurados!
+    ligar_luz()
     import time
-    time.sleep(5)
-    print("Desligando piscar vermelho.")
-    desligar_piscar_vermelho()
-    print("Teste concluído.")
+    time.sleep(2)
+    ligar_sirene()
+    time.sleep(2)
+    desligar_tudo()
+    print("Teste de API MQTT concluído.")
