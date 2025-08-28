@@ -5,7 +5,7 @@ import os
 import time
 
 # Tentar forçar o driver de vídeo para Windows, pode ajudar com tela preta
-os.environ['SDL_VIDEODRIVER'] = 'windows'
+# os.environ['SDL_VIDEODRIVER'] = 'windows'
 
 # Importar os módulos personalizados
 import config
@@ -70,8 +70,11 @@ except pygame.error as e:
         if key not in sounds:
             sounds[key] = None 
 
-# Configurar tela
-screen = pygame.display.set_mode((config.LARGURA_TELA, config.ALTURA_TELA), pygame.NOFRAME)
+# --- Configurar tela (NOVO CÓDIGO) ---
+info = pygame.display.Info()
+config.LARGURA_TELA=info.current_w
+config.ALTURA_TELA = info.current_h
+screen = pygame.display.set_mode((config.LARGURA_TELA, config.ALTURA_TELA), pygame.FULLSCREEN)
 pygame.display.set_caption("Terminal Pip-Boy (Fallout Inspired)")
 
 # Todas as variáveis globais que podem ser MODIFICADAS NESTE BLOCO de KEYDOWN.

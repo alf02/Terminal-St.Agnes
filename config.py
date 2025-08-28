@@ -48,7 +48,7 @@ HACKING_TIPOS_ESPECIAIS = [
 NUM_SEQUENCIAS_ESPECIAIS = 4
 
 # --- Comando Secreto de Backdoor ---
-COMANDO_BACKDOOR = "~IDDQD" # A string exata para o backdoor
+COMANDO_BACKDOOR = "IDDQD" # A string exata para o backdoor
 
 # --- STATUS DOS SISTEMAS (detalhes e permissões) ---
 SISTEMA_STATUS = {
