@@ -1,55 +1,48 @@
-import paho.mqtt.client as mqtt
+import socket
 import config
 
-# --- Configurações MQTT ---
+# --- Configurações UDP ---
 # O IP e a porta serão definidos em config.py
-MQTT_TOPIC_COMMANDS = "naka5/servidor/cmd" # Tópico para o qual o terminal vai publicar
-MQTT_QOS = 2 # Qualidade de Servico (garante entrega da mensagem)
 
-def on_connect(client, userdata, flags, rc):
-    if rc == 0:
-        print("Conectado ao broker MQTT com sucesso!")
-    else:
-        print(f"Falha na conexao ao broker, código de retorno: {rc}")
-
-def enviar_comando_mqtt(comando):
+def enviar_comando(comando_int):
     """
-    Conecta ao broker MQTT e publica um comando.
-    Comandos esperados: "LIGAR_LUZ", "LIGAR_SIRENE", "DESLIGAR_TUDO"
+    Envia um comando UDP para a sirene.
+    Comandos esperados: 0, 1
     """
     try:
-        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
-        client.on_connect = on_connect
-        client.connect(config.IP_LUZ, config.PORTA_MQTT_BROKER)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+        sock.settimeout(0.1) # Timeout curto para não travar o programa
         
-        # Envia a mensagem para o tópico
-        client.publish(MQTT_TOPIC_COMMANDS, payload=comando, qos=MQTT_QOS, retain=False)
-        print(f"DEBUG: Comando MQTT '{comando}' publicado no tópico '{MQTT_TOPIC_COMMANDS}'.")
-        client.disconnect()
-
+        server_address = (config.IP_LUMINARIA, config.PORTA_LUMINARIA)
+        
+        # Converte o inteiro para uma string antes de enviar
+        message = str(comando_int).encode('utf-8')
+        
+        print(f"DEBUG: Enviando comando UDP '{message.decode()}' para {config.IP_LUMINARIA}:{config.PORTA_LUMINARIA}")
+        sock.sendto(message, server_address)
+        
+    except socket.timeout:
+        print(f"DEBUG: Timeout ao enviar comando UDP. Verifique a conexao.")
+        pass 
     except Exception as e:
-        print(f"ERRO ao enviar comando MQTT para luz: {e}")
-
-def ligar_luz():
-    """Envia o comando 'lampada'."""
-    enviar_comando_mqtt("lampada")
+        print(f"ERRO ao enviar comando UDP para a sirene: {e}")
+        pass 
+    finally:
+        sock.close()
 
 def ligar_sirene():
-    """Envia o comando 'sirenes'."""
-    enviar_comando_mqtt("sirenes")
+    """Liga a sirene (envia '1')."""
+    enviar_comando(1)
 
-def desligar_tudo():
-    """Envia o comando 'DESLIGAR_TUDO'."""
-    enviar_comando_mqtt("DESLIGAR_TUDO")
+def desligar_sirene():
+    """Desliga a sirene (envia '0')."""
+    enviar_comando(0)
 
 # Exemplo de uso (para teste)
 if __name__ == "__main__":
-    print("Testando API das Luz com MQTT...")
-    # OBS: O broker precisa estar rodando no IP e porta configurados!
-    ligar_luz()
-    import time
-    time.sleep(2)
+    print("Testando API da Sirene com UDP...")
     ligar_sirene()
-    time.sleep(2)
-    desligar_tudo()
-    print("Teste de API MQTT concluído.")
+    import time
+    time.sleep(3)
+    desligar_sirene()
+    print("Teste de API UDP concluído.")
