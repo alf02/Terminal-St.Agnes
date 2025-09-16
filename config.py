@@ -20,7 +20,7 @@ NOME_ARQUIVO_FONTE = os.path.join('fontes', 'monofonto.ttf')
 GLITCH_PROBABILITY = 0.005 # Probabilidade de um glitch ocorrer em um frame (0.0 a 1.0)
 GLITCH_DURATION_MIN = 50   # Duração mínima de um glitch em milissegundos
 GLITCH_DURATION_MAX = 200  # Duração máxima de um glitch em milissegundos
-GLITCH_SHIFT_MAX = 5     # Deslocamento máximo em pixels para o glitch tipo 'shift'
+GLITCH_SHIFT_MAX = 5       # Deslocamento máximo em pixels para o glitch tipo 'shift'
 GLITCH_NOISE_PIXELS = 100  # Número de pixels de ruído para o glitch tipo 'noise'
 
 # --- Variáveis do Jogo de Hacking ---
@@ -101,12 +101,12 @@ SOM_SHUTDOWN = os.path.join('sons', 'shutdown.mp3')
 MUSICA_PURGE_ALERTA = os.path.join('sons', 'purge_alert.mp3')
 SOM_DIGITACAO = os.path.join('sons', 'typing_sound.mp3')
 
-# ALTERADO AQUI: Agora é uma lista de caminhos para as 5 músicas de SERVER_DESTRUCT
-MUSICAS_SERVER_DESTRUCT_ALERTA = [os.path.join('sons', f'server_destruct_alert_{i}.mp3') for i in range(5)]
-
-PURGE_CONFIRM_CODES = [["BRAVO","3659"], ["DELTA","9963"]] # Codigos BRAVO E DELTA.
-
-SERVER_DESTRUCT_CONFIRM_CODES = [["ALFA","8325"], ["CHARLIE","7785"], ["ECHO","6094"], ["FOXTROT","0094"]] #Codigos Alfa, Charlie, Echo e Fox.
+# ALTERADO AQUI: Nova estrutura de lista para os códigos de PURGE
+PURGE_CONFIRM_CODES = [["BRAVO", "3659"], ["DELTA", "9963"]] 
+# ALTERADO AQUI: Nova estrutura de lista para os códigos de Destruição
+SERVER_DESTRUCT_CONFIRM_CODES = [["ALFA", "8325"], ["CHARLIE", "7785"], ["ECHO", "6094"], ["FOXTROT", "0094"]]
+# ALTERADO AQUI: Lista de caminhos para as 3 músicas de SERVER_DESTRUCT
+MUSICAS_SERVER_DESTRUCT_ALERTA = [os.path.join('sons', f'server_destruct_alert_{i}.mp3') for i in range(3)] 
 
 # --- Configurações de Protocolo de Autodestruição (Purge/Server Destruct) ---
 PURGE_TEMPO_TOTAL_SEGUNDOS = 15 * 60 # 15 minutos (900 segundos)
@@ -117,8 +117,19 @@ TEMPO_TELA_INICIAL = 2 # Segundos que a tela inicial "Laboratório St.Agnes" fic
 TEMPO_TELA_LOADING = 3 # Segundos que a tela de "Loading" fica visível
 
 AD_MESSAGE_BLINK_DURATION_MS = 3000 # Tempo que cada mensagem pisca antes de fixar (3 segundos)
-AD_PAUSE_BETWEEN_MESSAGES_MS = 3000 # Pausa entre uma mensagem fixar e a próxima começar a pisar (3 segundos)
+AD_PAUSE_BETWEEN_MESSAGES_MS = 3000 # Pausa entre uma mensagem fixar e a próxima começar a piscar (3 segundos)
 
-# --- Configurações das Luminárias (AGORA USANDO MQTT) ---
-IP_LUZ = "192.168.3.10" # <--- SUBSTITUA PELO IP DO SEU BROKER MQTT (pode ser o IP do PC ou do Pi)
-PORTA_MQTT_BROKER = 1883       # Porta padrão do Mosquitto
+# --- Configurações das Luminárias ---
+try:
+    # Tenta ler o IP de um arquivo de texto para facilidade de uso
+    with open("luz_ip.txt", "r") as f:
+        IP_LUMINARIA = f.read().strip()
+except FileNotFoundError:
+    # Se o arquivo não for encontrado, usa um IP de fallback e avisa o usuário
+    IP_LUMINARIA = "192.168.4.1" # IP padrão do ESP8266 em modo AP
+    print("AVISO: Arquivo 'luz_ip.txt' nao encontrado. Usando IP padrao 192.168.4.1")
+except Exception as e:
+    IP_LUMINARIA = "192.168.4.1"
+    print(f"ERRO ao ler 'luz_ip.txt': {e}. Usando IP padrao 192.168.4.1")
+
+PORTA_LUMINARIA = 8888        # Porta UDP que o ESP8266 estará escutando (ex: 8888)

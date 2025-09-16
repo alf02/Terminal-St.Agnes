@@ -592,7 +592,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                 mensagens_historico.append(f"Protocolo de {protocolo_atual_nome} concluído. Sistema desligando.")
                 if pygame.mixer.music.get_busy(): 
                     pygame.mixer.music.stop()
-                luz_api.ligar_luz() 
+                luz_api.desligar_sirene() 
                 
                 play_sound("shutdown") 
                 estado_terminal = "DESLIGANDO" 

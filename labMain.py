@@ -271,7 +271,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                                 protocolo_atual_nome = "PURGE" # Assume que é PURGE, mas pode ser generalizado se houver SERVER_DESTRUCT com códigos
                                 if sounds.get('purge_alert') and not pygame.mixer.music.get_busy():
                                     play_sound("purge_alert") 
-                                luz_api.ligar_sinal_iluminoso() 
+                                luz_api.ligar_sirene() 
                                 estado_terminal = "PURGE_CONTADOR"
                             else: # Mais códigos necessários
                                 mensagens_historico.append(f"CODE {prompt_name} ACEITO.")
@@ -322,7 +322,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                                 purge_mensagem_adicional = "Validando credenciais para Destruicao de Servidor..."
                                 protocolo_atual_nome = "SERVER_DESTRUCT" 
                                 play_sound("server_destruct_alert_random") 
-                                luz_api.ligar_sinal_iluminoso() 
+                                luz_api.ligar_sirene() 
                                 estado_terminal = "PURGE_CONTADOR" # Usa o mesmo estado de contagem
                             else: # Mais códigos necessários
                                 mensagens_historico.append(f"CODIGO {destruct_current_code_index} DE {len(config.SERVER_DESTRUCT_CONFIRM_CODES)} ACEITO.")
@@ -592,7 +592,7 @@ while True: # Loop externo para reiniciar o terminal completamente
                 mensagens_historico.append(f"Protocolo de {protocolo_atual_nome} concluído. Sistema desligando.")
                 if pygame.mixer.music.get_busy(): 
                     pygame.mixer.music.stop()
-                luz_api.desligar_tudo() 
+                luz_api.desligar_sirene() 
                 
                 play_sound("shutdown") 
                 estado_terminal = "DESLIGANDO" 
